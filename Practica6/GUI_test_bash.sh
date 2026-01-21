@@ -9,7 +9,7 @@ if ! command -v wmctrl &> /dev/null; then
     sudo apt-get install -y wmctrl
 fi
 
-#pruba de git valedacion de .yml
+# git para validar el .yml
 # Iniciar aplicación
 ./bin/calculo_punto_fijo &
 APP_PID=$!
