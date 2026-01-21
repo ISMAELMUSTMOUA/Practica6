@@ -1,63 +1,106 @@
 #!/bin/bash
 
-# 1. Forzar X11
+# 1. Primero, forzar X11 para la aplicación
 export GDK_BACKEND=x11
 
-# 2. Iniciar aplicación en segundo plano
+# Instalar wmctrl si no está
+if ! command -v wmctrl &> /dev/null; then
+    echo "Instalando wmctrl..."
+    sudo apt-get install -y wmctrl
+fi
+
+# git para validar el .yml
+# Iniciar aplicación
 ./bin/calculo_punto_fijo &
 APP_PID=$!
 echo "App started with PID $APP_PID"
 
-# 3. Esperar a que la ventana aparezca usando xdotool
-echo "Buscando ventana..."
+# Esperar
+sleep 10
 
-# xdotool search:
-# --sync: Espera a que la ventana aparezca
-# --timeout 10000: Espera máximo 10 segundos
-# --name: Busca por parte del título o nombre del ejecutable
-# "calculo": Texto a buscar
-WID=$(xdotool search --sync --timeout 10000 --name "calculo" | head -n 1)
+# Buscar con wmctrl (más confiable para GTK)
+echo "Buscando ventana con wmctrl..."
+wmctrl -l  # Mostrar todas las ventanas
 
-if [ -n "$WID" ]; then
-    echo "Ventana encontrada ID: $WID"
+
+# Esperar
+sleep 10
+
+# Buscar por nombre
+WID_HEX=$(wmctrl -l | grep -i "calculo punto fijo" | awk '{print $1}')
+echo "WID_HEX encontrado: $WID_HEX"
+
+if [ -n "$WID_HEX" ]; then
+    # wmctrl devuelve IDs hexadecimales, convertir a decimal
+    WID=$(printf "%d" "0x$WID_HEX")
+    echo "WID decimal: $WID"
     
-    # Enfocar la ventana
-    xdotool windowactivate --sync $WID
+    # Activar con wmctrl (funciona mejor para GTK)
+    wmctrl -i -a "$WID_HEX"
     sleep 1
     
-    echo "Enviando teclas..."
+    # Ahora usar xdotool para enviar teclas
+    echo "Ventana activada. Enviando teclas..."
     
-    # --- Interacción con la pestaña Moles ---
-    # Tab x2 para ir al campo
+    # Ir al campo Vp
     xdotool key --window $WID Tab Tab
+    sleep 0.5
     xdotool type --window $WID "2.5"
+    sleep 0.5
     
+    # Ir al campo Vt
     xdotool key --window $WID Tab Tab
+    sleep 0.5
     xdotool type --window $WID "300"
+    sleep 0.5
     
-    # --- Cambiar de Pestaña (Shift+Tab x3 -> Espacio) ---
+    # Activar botón Test Específico
     xdotool key --window $WID Shift+Tab Shift+Tab Shift+Tab
     sleep 0.5
     xdotool key --window $WID space
     sleep 1
 
-    # --- Interacción con la pestaña Densidad ---
-    # Tabs para llegar al campo
+    # Ir al campo p densidad 
     xdotool key --window $WID Tab Tab Tab Tab Tab Tab
+    sleep 0.5
     xdotool type --window $WID "820000"
+    sleep 0.5
     
+    # Ir al campo Vt
     xdotool key --window $WID Tab Tab
+    sleep 0.5
     xdotool type --window $WID "750"
+    sleep 0.5
     
-    echo "Interacción finalizada con éxito."
+    # Activar botón Test Específico
+    xdotool key --window $WID Shift+Tab Shift+Tab Shift+Tab
+    sleep 0.5
+    xdotool key --window $WID space
+    sleep 1
+
+    # Ir al campo A energie  
+    xdotool key --window $WID Tab Tab Tab Tab Tab Tab
+    sleep 0.5
+    xdotool type --window $WID "256"
+    sleep 0.5
+    
+    # Ir al campo W
+    xdotool key --window $WID Tab Tab
+    sleep 0.5
+    xdotool type --window $WID "8500000"
+    sleep 0.5
+    
+    # Activar botón Test Específico
+    xdotool key --window $WID Shift+Tab Shift+Tab Shift+Tab
+    sleep 0.5
+    xdotool key --window $WID space
+    
+    
+    sleep 2
 else
-    echo "ERROR CRÍTICO: xdotool no encontró la ventana después de 10 segundos."
-    # Listar ventanas visibles para depuración
-    xdotool search --name ""
-    kill $APP_PID
-    exit 1
+    echo "ERROR: No se encontró la ventana con wmctrl"
 fi
 
-# 4. Limpieza
+# Limpiar
 kill $APP_PID 2>/dev/null
 echo "Prueba completada"
