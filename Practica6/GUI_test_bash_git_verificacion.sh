@@ -8,7 +8,11 @@ export GDK_BACKEND=x11
 APP_PID=$!
 echo "App started with PID $APP_PID"
 
-# 3. Esperar Ventana
+# 3. CREAR LA CARPETA 'images' (Para que sea estático y ordenado)
+mkdir -p images
+echo "Carpeta 'images' asegurada."
+
+# 4. Esperar Ventana
 echo "Buscando ventana 'calculo'..."
 MAX_INTENTOS=20
 CONTADOR=0
@@ -36,12 +40,11 @@ xdotool type --window $WID "2.5" 2>/dev/null
 xdotool key --window $WID Tab Tab 2>/dev/null
 xdotool type --window $WID "300" 2>/dev/null
 sleep 0.5
-# Simulamos Calcular (si tienes botón haz Enter, si es automático solo foto)
-xdotool key --window $WID Return 2>/dev/null 
+xdotool key --window $WID Return 2>/dev/null
 sleep 1
-# FOTO 1
-scrot "evidencia_1_moles.png"
-echo "Captura tomada: evidencia_1_moles.png"
+# FOTO EN CARPETA IMAGES
+scrot "images/evidencia_1_moles.png"
+echo "Captura: images/evidencia_1_moles.png"
 
 # --- TEST 2: DENSIDAD ---
 echo "--> Cambiando a Densidad..."
@@ -59,9 +62,9 @@ xdotool type --window $WID "750" 2>/dev/null
 sleep 0.5
 xdotool key --window $WID Return 2>/dev/null
 sleep 1
-# FOTO 2
-scrot "evidencia_2_densidad.png"
-echo "Captura tomada: evidencia_2_densidad.png"
+# FOTO EN CARPETA IMAGES
+scrot "images/evidencia_2_densidad.png"
+echo "Captura: images/evidencia_2_densidad.png"
 
 # --- TEST 3: ENERGÍA ---
 echo "--> Cambiando a Energía..."
@@ -81,10 +84,10 @@ xdotool type --window $WID "8500000" 2>/dev/null
 sleep 0.5
 xdotool key --window $WID Return 2>/dev/null
 sleep 1
-# FOTO 3
-scrot "evidencia_3_energia.png"
-echo "Captura tomada: evidencia_3_energia.png"
+# FOTO EN CARPETA IMAGES
+scrot "images/evidencia_3_energia.png"
+echo "Captura: images/evidencia_3_energia.png"
 
 # 5. Limpieza
 kill $APP_PID 2>/dev/null
-echo "Prueba completada con fotos"
+echo "Prueba completada con fotos organizadas."
