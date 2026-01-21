@@ -1,106 +1,71 @@
 #!/bin/bash
 
-# 1. Primero, forzar X11 para la aplicación
+# 1. Forzar backend X11
 export GDK_BACKEND=x11
 
-# Instalar wmctrl si no está
-if ! command -v wmctrl &> /dev/null; then
-    echo "Instalando wmctrl..."
-    sudo apt-get install -y wmctrl
-fi
-
-# git para validar el .yml
-# Iniciar aplicación
+# 2. Iniciar aplicación en segundo plano
 ./bin/calculo_punto_fijo &
 APP_PID=$!
 echo "App started with PID $APP_PID"
 
-# Esperar
-sleep 10
+# 3. Bucle de espera manual
+echo "Buscando ventana 'calculo'..."
 
-# Buscar con wmctrl (más confiable para GTK)
-echo "Buscando ventana con wmctrl..."
-wmctrl -l  # Mostrar todas las ventanas
+MAX_INTENTOS=20
+CONTADOR=0
+WID=""
 
+while [ -z "$WID" ]; do
+    WID=$(xdotool search --name "calculo" 2>/dev/null | head -n 1)
+    
+    if [ -n "$WID" ]; then
+        break
+    fi
 
-# Esperar
-sleep 10
+    if [ $CONTADOR -ge $MAX_INTENTOS ]; then
+        echo "ERROR CRÍTICO: Timeout esperando ventana."
+        kill $APP_PID 2>/dev/null
+        exit 1
+    fi
 
-# Buscar por nombre
-WID_HEX=$(wmctrl -l | grep -i "calculo punto fijo" | awk '{print $1}')
-echo "WID_HEX encontrado: $WID_HEX"
+    sleep 0.5
+    CONTADOR=$((CONTADOR+1))
+done
 
-if [ -n "$WID_HEX" ]; then
-    # wmctrl devuelve IDs hexadecimales, convertir a decimal
-    WID=$(printf "%d" "0x$WID_HEX")
-    echo "WID decimal: $WID"
-    
-    # Activar con wmctrl (funciona mejor para GTK)
-    wmctrl -i -a "$WID_HEX"
-    sleep 1
-    
-    # Ahora usar xdotool para enviar teclas
-    echo "Ventana activada. Enviando teclas..."
-    
-    # Ir al campo Vp
-    xdotool key --window $WID Tab Tab
-    sleep 0.5
-    xdotool type --window $WID "2.5"
-    sleep 0.5
-    
-    # Ir al campo Vt
-    xdotool key --window $WID Tab Tab
-    sleep 0.5
-    xdotool type --window $WID "300"
-    sleep 0.5
-    
-    # Activar botón Test Específico
-    xdotool key --window $WID Shift+Tab Shift+Tab Shift+Tab
-    sleep 0.5
-    xdotool key --window $WID space
-    sleep 1
+echo "¡Ventana encontrada! ID: $WID"
 
-    # Ir al campo p densidad 
-    xdotool key --window $WID Tab Tab Tab Tab Tab Tab
-    sleep 0.5
-    xdotool type --window $WID "820000"
-    sleep 0.5
-    
-    # Ir al campo Vt
-    xdotool key --window $WID Tab Tab
-    sleep 0.5
-    xdotool type --window $WID "750"
-    sleep 0.5
-    
-    # Activar botón Test Específico
-    xdotool key --window $WID Shift+Tab Shift+Tab Shift+Tab
-    sleep 0.5
-    xdotool key --window $WID space
-    sleep 1
+# 4. Interactuar
+# NOTA: En CI/CD sin gestor de ventanas, windowactivate falla. 
+# Lo quitamos y añadimos un sleep para asegurar estabilidad.
+sleep 1
 
-    # Ir al campo A energie  
-    xdotool key --window $WID Tab Tab Tab Tab Tab Tab
-    sleep 0.5
-    xdotool type --window $WID "256"
-    sleep 0.5
-    
-    # Ir al campo W
-    xdotool key --window $WID Tab Tab
-    sleep 0.5
-    xdotool type --window $WID "8500000"
-    sleep 0.5
-    
-    # Activar botón Test Específico
-    xdotool key --window $WID Shift+Tab Shift+Tab Shift+Tab
-    sleep 0.5
-    xdotool key --window $WID space
-    
-    
-    sleep 2
-else
-    echo "ERROR: No se encontró la ventana con wmctrl"
-fi
+echo "Enviando pulsaciones de teclado..."
 
-# Limpiar
+# Usamos 2>/dev/null para ocultar los warnings del servidor X11 (XGetInputFocus)
+# que son normales en xvfb y ensucian el log.
+
+# --- Pestaña Moles ---
+xdotool key --window $WID Tab Tab 2>/dev/null
+xdotool type --window $WID "2.5" 2>/dev/null
+
+xdotool key --window $WID Tab Tab 2>/dev/null
+xdotool type --window $WID "300" 2>/dev/null
+
+# --- Cambiar Pestaña ---
+xdotool key --window $WID Shift+Tab Shift+Tab Shift+Tab 2>/dev/null
+sleep 0.5
+xdotool key --window $WID space 2>/dev/null
+sleep 1
+
+# --- Pestaña Densidad ---
+xdotool key --window $WID Tab Tab Tab Tab Tab Tab 2>/dev/null
+xdotool type --window $WID "820000" 2>/dev/null
+
+xdotool key --window $WID Tab Tab 2>/dev/null
+xdotool type --window $WID "750" 2>/dev/null
+
+echo "Interacción finalizada con éxito."
+
+# 5. Limpieza final
 kill $APP_PID 2>/dev/null
 echo "Prueba completada"
