@@ -1,0 +1,12 @@
+REPORTE DE TESTEO - ESTRATEGIA DE CAJA NEGRA
+============================================================
+Librería punto fijo: ./libpuntofijo.so
+Librería coma flotante (referencia): ./libcomaflotante.so
+
+Técnicas aplicadas:
+- Testeo de caja negra
+- Análisis de valores frontera
+- Clase equivalente 1: valores pequeños (1-100)
+- Clase equivalente 2: valores medianos (100-10000)
+- Valores frontera: 0, 1, MAX_INT, overflow
+- Scripts automáticos con reporte pass/fail
