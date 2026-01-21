@@ -7,6 +7,11 @@ on:
   pull_request:
     branches: [ "main", "master" ]
 
+#directorio de donde hace el test
+defaults:
+      run:
+        working-directory: ./practica6
+        
 jobs:
   build-and-test:
     runs-on: ubuntu-22.04
