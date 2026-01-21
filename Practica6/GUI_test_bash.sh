@@ -1,71 +1,106 @@
 #!/bin/bash
 
-# 1. Forzar backend X11
+# 1. Primero, forzar X11 para la aplicación
 export GDK_BACKEND=x11
 
-# 2. Iniciar aplicación en segundo plano
+# Instalar wmctrl si no está
+if ! command -v wmctrl &> /dev/null; then
+    echo "Instalando wmctrl..."
+    sudo apt-get install -y wmctrl
+fi
+
+# git para validar el .yml
+# Iniciar aplicación
 ./bin/calculo_punto_fijo &
 APP_PID=$!
 echo "App started with PID $APP_PID"
 
-# 3. Bucle de espera manual (Reemplaza a --sync --timeout)
-echo "Buscando ventana 'calculo'..."
+# Esperar
+sleep 10
 
-MAX_INTENTOS=20  # 20 intentos * 0.5 seg = 10 segundos max
-CONTADOR=0
-WID=""
+# Buscar con wmctrl (más confiable para GTK)
+echo "Buscando ventana con wmctrl..."
+wmctrl -l  # Mostrar todas las ventanas
 
-while [ -z "$WID" ]; do
-    # Buscamos la ventana por nombre. Redirigimos errores a null por si acaso.
-    # Usamos 'head -n 1' para quedarnos solo con el primer ID si hay varios.
-    WID=$(xdotool search --name "calculo" 2>/dev/null | head -n 1)
+
+# Esperar
+sleep 10
+
+# Buscar por nombre
+WID_HEX=$(wmctrl -l | grep -i "calculo punto fijo" | awk '{print $1}')
+echo "WID_HEX encontrado: $WID_HEX"
+
+if [ -n "$WID_HEX" ]; then
+    # wmctrl devuelve IDs hexadecimales, convertir a decimal
+    WID=$(printf "%d" "0x$WID_HEX")
+    echo "WID decimal: $WID"
     
-    if [ -n "$WID" ]; then
-        break
-    fi
-
-    if [ $CONTADOR -ge $MAX_INTENTOS ]; then
-        echo "ERROR CRÍTICO: Timeout - La ventana no apareció tras 10 segundos."
-        kill $APP_PID 2>/dev/null
-        exit 1
-    fi
-
-    echo "Esperando ventana... ($CONTADOR/$MAX_INTENTOS)"
+    # Activar con wmctrl (funciona mejor para GTK)
+    wmctrl -i -a "$WID_HEX"
+    sleep 1
+    
+    # Ahora usar xdotool para enviar teclas
+    echo "Ventana activada. Enviando teclas..."
+    
+    # Ir al campo Vp
+    xdotool key --window $WID Tab Tab
     sleep 0.5
-    CONTADOR=$((CONTADOR+1))
-done
+    xdotool type --window $WID "2.5"
+    sleep 0.5
+    
+    # Ir al campo Vt
+    xdotool key --window $WID Tab Tab
+    sleep 0.5
+    xdotool type --window $WID "300"
+    sleep 0.5
+    
+    # Activar botón Test Específico
+    xdotool key --window $WID Shift+Tab Shift+Tab Shift+Tab
+    sleep 0.5
+    xdotool key --window $WID space
+    sleep 1
 
-echo "¡Ventana encontrada! ID: $WID"
+    # Ir al campo p densidad 
+    xdotool key --window $WID Tab Tab Tab Tab Tab Tab
+    sleep 0.5
+    xdotool type --window $WID "820000"
+    sleep 0.5
+    
+    # Ir al campo Vt
+    xdotool key --window $WID Tab Tab
+    sleep 0.5
+    xdotool type --window $WID "750"
+    sleep 0.5
+    
+    # Activar botón Test Específico
+    xdotool key --window $WID Shift+Tab Shift+Tab Shift+Tab
+    sleep 0.5
+    xdotool key --window $WID space
+    sleep 1
 
-# 4. Interactuar
-# Enfocar la ventana
-xdotool windowactivate --sync $WID
-sleep 1
+    # Ir al campo A energie  
+    xdotool key --window $WID Tab Tab Tab Tab Tab Tab
+    sleep 0.5
+    xdotool type --window $WID "256"
+    sleep 0.5
+    
+    # Ir al campo W
+    xdotool key --window $WID Tab Tab
+    sleep 0.5
+    xdotool type --window $WID "8500000"
+    sleep 0.5
+    
+    # Activar botón Test Específico
+    xdotool key --window $WID Shift+Tab Shift+Tab Shift+Tab
+    sleep 0.5
+    xdotool key --window $WID space
+    
+    
+    sleep 2
+else
+    echo "ERROR: No se encontró la ventana con wmctrl"
+fi
 
-echo "Enviando pulsaciones de teclado..."
-
-# --- Pestaña Moles ---
-xdotool key --window $WID Tab Tab
-xdotool type --window $WID "2.5"
-
-xdotool key --window $WID Tab Tab
-xdotool type --window $WID "300"
-
-# --- Cambiar Pestaña ---
-xdotool key --window $WID Shift+Tab Shift+Tab Shift+Tab
-sleep 0.5
-xdotool key --window $WID space
-sleep 1
-
-# --- Pestaña Densidad ---
-xdotool key --window $WID Tab Tab Tab Tab Tab Tab
-xdotool type --window $WID "820000"
-
-xdotool key --window $WID Tab Tab
-xdotool type --window $WID "750"
-
-echo "Interacción finalizada con éxito."
-
-# 5. Limpieza final
+# Limpiar
 kill $APP_PID 2>/dev/null
 echo "Prueba completada"
