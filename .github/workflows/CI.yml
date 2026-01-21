@@ -51,7 +51,7 @@ jobs:
 
     - name: Test de Interacción (Bash)
       run: |
-        dos2unix GUI_test_bash.sh
-        chmod +x GUI_test_bash.sh
+        dos2unix GUI_test_bash_git_verificacion.sh
+        chmod +x GUI_test_bash_git_verificacion.sh
         export GDK_BACKEND=x11
-        xvfb-run ./GUI_test_bash.sh
+        xvfb-run ./GUI_test_bash_git_verificacion.sh
