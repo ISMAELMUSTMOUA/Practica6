@@ -55,7 +55,8 @@ jobs:
         chmod +x GUI_test_bash_git_verificacion.sh
         export GDK_BACKEND=x11
         xvfb-run ./GUI_test_bash_git_verificacion.sh
-        # NUEVO: Subir las capturas para que las puedas ver
+    
+     #  Subir las capturas para que las puedas ver
     - name: Guardar Evidencias (Screenshots)
       if: always() # Se ejecuta aunque falle el test
       uses: actions/upload-artifact@v3
