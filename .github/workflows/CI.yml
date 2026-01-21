@@ -1,4 +1,5 @@
-name: Validación Automática Práctica 6
+name: C/GTK CI Pipeline
+
 on:
   push:
     branches: [ "main", "master" ]
@@ -8,44 +9,45 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-22.04
+
+    # --- ESTO ARREGLA TU ERROR ---
+    # Le dice a GitHub que todos los comandos 'run' se ejecuten
+    # dentro de la carpeta "Practica6" donde está tu makefile.
+    defaults:
+      run:
+        working-directory: ./Practica6
+
     steps:
-    # 1. Descargar el código (Esto siempre se hace en la raíz)
+    # 1. Descargar código (Siempre se hace en la raíz, no le afecta el default)
     - uses: actions/checkout@v3
-    - name:  VER ESTRUCTURA DE CARPETAS
-      run: |
-            echo "=== ESTOY AQUÍ ==="
-            pwd
-            echo ""
-            echo "=== ESTOS SON LOS ARCHIVOS ==="
-            ls -R
+
     # 2. Instalar dependencias
-    # (El apt-get da igual en qué carpeta se haga, así que no afecta)
     - name: Instalar Dependencias
       run: |
         sudo apt-get update
         sudo apt-get install -y gcc make pkg-config libgtk-3-dev python3 python3-pip xvfb xdotool wmctrl
         pip3 install pytest
 
-    # 3. Compilar el proyecto
-    # Ahora funcionará porque estamos dentro de ./practica6
+    # 3. Compilar Proyecto (Ahora sí encontrará el makefile)
     - name: Compilar Proyecto
       run: make all
 
-    # 4. Generar los datos de prueba
+    # 4. Generar Casos de Test
     - name: Generar Casos de Test
       run: |
         mkdir -p tests/data
         python3 generacion_de_testeo.py
 
-    # 5. Ejecutar Pytest (Capa Lógica)
-    - name: Ejecutar Pytest
-      run: |
+    # 5. Ejecutar Pytest
+    - name: Ejecutar Pytest (Capa Lógica)
+      run: |   
         # Ejecutar tests
         pytest tests/python/pytest_cap3.py -v
 
     # 6. Smoke Test GUI (Python)
     - name: Smoke Test GUI (Python)
       run: |
+        # Entramos a la carpeta específica del test
         cd tests/python
         xvfb-run python3 GUI_test.py
 
@@ -54,4 +56,5 @@ jobs:
       run: |
         chmod +x GUI_test_bash.sh
         export GDK_BACKEND=x11
+        # IMPORTANTE: Asegúrate de haber quitado 'make run' de tu script bash
         xvfb-run ./GUI_test_bash.sh
