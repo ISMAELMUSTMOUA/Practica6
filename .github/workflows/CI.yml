@@ -8,17 +8,16 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-22.04
-
-    # --- AQUÍ ESTÁ EL CAMBIO CLAVE ---
-    # Esto le dice a GitHub: "Ejecuta todos los comandos dentro de la carpeta practica6"
-    defaults:
-      run:
-        working-directory: ./practica6
-
     steps:
     # 1. Descargar el código (Esto siempre se hace en la raíz)
     - uses: actions/checkout@v3
-
+    - name:  VER ESTRUCTURA DE CARPETAS
+      run: |
+            echo "=== ESTOY AQUÍ ==="
+            pwd
+            echo ""
+            echo "=== ESTOS SON LOS ARCHIVOS ==="
+            ls -R
     # 2. Instalar dependencias
     # (El apt-get da igual en qué carpeta se haga, así que no afecta)
     - name: Instalar Dependencias
