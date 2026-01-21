@@ -8,7 +8,7 @@ import math
 import os
 
 # Cargar librerías
-lib_fx = ctypes.CDLL("../../../Practica6/build/libpuntofijo.so")
+lib_fx = ctypes.CDLL("./build/libpuntofijo.so")
 
 # Configurar funciones (void en tu código)
 lib_fx.calc_moles_fx.argtypes = [ctypes.c_uint32, ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32)]
