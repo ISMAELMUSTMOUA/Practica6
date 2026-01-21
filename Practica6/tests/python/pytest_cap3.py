@@ -48,19 +48,19 @@ def within_tolerance(actual, expected, tolerance_percent=6.0):
 
 # --- CLASE DE TEST PARA PYTEST ---
 class TestSimple:
-    @pytest.mark.parametrize("case", read_test_cases("../data/moles_test_cases.txt"))
+    @pytest.mark.parametrize("case", read_test_cases("./tests/data/moles_test_cases.txt"))
     def test_moles(self, case):
         resultado = ctypes.c_uint32()
         lib_fx.calc_moles_fx(ctypes.c_uint32(case['input1']), ctypes.c_uint32(case['input2']), ctypes.byref(resultado))
         self._check_result(resultado.value, case, "Moles")
 
-    @pytest.mark.parametrize("case", read_test_cases("../data/density_test_cases.txt"))
+    @pytest.mark.parametrize("case", read_test_cases("./tests/data/density_test_cases.txt"))
     def test_density(self, case):
         resultado = ctypes.c_uint32()
         lib_fx.calc_density_fx(ctypes.c_uint32(case['input1']), ctypes.c_uint32(case['input2']), ctypes.byref(resultado))
         self._check_result(resultado.value, case, "Densidad")
 
-    @pytest.mark.parametrize("case", read_test_cases("../data/energy_test_cases.txt"))
+    @pytest.mark.parametrize("case", read_test_cases("./tests/data/energy_test_cases.txt"))
     def test_energy(self, case):
         resultado = ctypes.c_uint32()
         lib_fx.calc_kinetic_energy_fx(ctypes.c_uint32(case['input1']), ctypes.c_uint32(case['input2']), ctypes.byref(resultado))
@@ -99,9 +99,9 @@ def test_multiple_cases():
     print(" EJECUTANDO SUITE COMPLETA DE PRUEBAS (Tolerancia 6%)") 
     print("="*60)
 
-    moles_cases = read_test_cases("../data/moles_test_cases.txt")
-    density_cases = read_test_cases("../data/density_test_cases.txt")
-    energy_cases = read_test_cases("../data/energy_test_cases.txt")
+    moles_cases = read_test_cases("./tests/data/moles_test_cases.txt")
+    density_cases = read_test_cases("./tests/data/density_test_cases.txt")
+    energy_cases = read_test_cases("./tests/data/energy_test_cases.txt")
 
     resultados = []
     
