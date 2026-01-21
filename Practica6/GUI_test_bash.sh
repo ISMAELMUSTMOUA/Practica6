@@ -9,8 +9,6 @@ if ! command -v wmctrl &> /dev/null; then
     sudo apt-get install -y wmctrl
 fi
 
-# Compilar
-make run
 
 # Iniciar aplicación
 ./bin/calculo_punto_fijo &
