@@ -1,5 +1,6 @@
 Practica6/bin/*
 Practica6/build/*
+Practica6/tests/data/
 Practica6/.pytest_cache/
 Practica6/src/python/__pycache__
 Practica6/tests/python/__pycache__
