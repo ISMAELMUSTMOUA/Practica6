@@ -10,7 +10,7 @@ test_data = tests/data
 CFLAGS = -g -Wall `pkg-config --cflags gtk+-3.0` -Iinclude -fPIC
 LIBS = `pkg-config --libs gtk+-3.0` -lm
 
-all: $(BIN)/$(EXE) $(BUILD)/libcomaflotante.so $(BUILD)/libpuntofijo.so generate-test-data
+all: create-dirs $(BIN)/$(EXE) $(BUILD)/libcomaflotante.so $(BUILD)/libpuntofijo.so generate-test-data
 
 # Ejecutables y librerías
 $(BIN)/$(EXE): $(SRC)/interfaz.c $(SRC)/gestion.c $(SRC)/puntofijo.c
@@ -28,6 +28,12 @@ $(BUILD)/libpuntofijo.so: $(SRC)/puntofijo.c
 #generacion de datos de testeo
 generate-test-data:
 	python3 generacion_de_testeo.py
+
+# creación de directorios para evitar errores
+create-dirs:
+	mkdir -p $(BUILD)
+	mkdir -p $(BIN)
+	mkdir -p $(test_data)
 
 # Tests de punto fijo
 test-moles: $(BUILD)/libpuntofijo.so
@@ -52,6 +58,6 @@ run: $(BIN)/$(EXE)
 	./$(BIN)/$(EXE)
 
 clean:
-	rm -rf $(BIN)/$(EXE) $(BUILD)/*.o $(BUILD)/*.so $(test_data)/*_test_cases.txt
+	rm -rf $(BIN) $(BUILD) $(test_data)
 
-.PHONY: all clean test-moles test-densidad test-energia test_cap1 test_cap3 test-all run
+.PHONY: all clean create-dirs test-moles test-densidad test-energia test_cap1 test_cap3 test-all run

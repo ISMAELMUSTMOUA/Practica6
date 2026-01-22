@@ -1,9 +1,6 @@
 Practica6/bin/*
-!Practica6/bin/.gitkeep
 Practica6/build/*
-!Practica6/build/.gitkeep
-Practica6/tests/data/
-!Practica6/tests/data/.gitkeep
+Practica6/tests/data/*
 Practica6/.pytest_cache/
 Practica6/src/python/__pycache__
 Practica6/tests/python/__pycache__
