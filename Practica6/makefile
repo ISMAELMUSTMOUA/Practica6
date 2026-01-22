@@ -38,6 +38,12 @@ generate-test-data:
 
 
 # Tests de capas
+test_capa1: $(BUILD)/libpuntofijo.so
+	python ./tests/GUI_test.py
+
+test_capa2: $(BUILD)/libpuntofijo.so
+	pytest ./tests/pytest_cap2.py
+
 test_capa3: $(BUILD)/libpuntofijo.so
 	pytest ./tests/pytest_cap3.py
 
@@ -48,4 +54,4 @@ run: $(BIN)/$(EXE)
 clean:
 	rm -rf $(BIN) $(BUILD) $(test_data)
 
-.PHONY: all create-dirs generate-test-data test_capa3 run clean
+.PHONY: all create-dirs generate-test-data test_capa1 test_capa2 test_capa3 run clean
