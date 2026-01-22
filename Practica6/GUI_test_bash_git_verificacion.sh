@@ -125,6 +125,8 @@ xwd -id $WID -out images/03_energia.xwd 2>/dev/null && \
 xdotool key Shift+Tab Shift+Tab Shift+Tab
 sleep 1.5
 xdotool key space
+sleep 1
+xdotool key space
 sleep 3
 
 # Captura final
