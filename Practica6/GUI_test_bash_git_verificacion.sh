@@ -1,142 +1,148 @@
 #!/bin/bash
 
-# 1. Configuración para entorno headless
+# Configuración para entorno headless
 export GDK_BACKEND=x11
-export DISPLAY=:99  # IMPORTANTE: Xvfb usa este display
+# NOTA: xvfb-run ya establecerá DISPLAY automáticamente
 
-# 3. Iniciar aplicación en background
-echo "Iniciando aplicación..."
+echo "=== Iniciando aplicación ==="
 ./bin/calculo_punto_fijo &
 APP_PID=$!
-echo "App started with PID $APP_PID"
+echo "PID: $APP_PID"
 
-# 4. Esperar más tiempo en CI (puede ser más lento)
+# Dar tiempo para que la aplicación se inicie
 sleep 5
 
-# 5. Buscar ventana con wmctrl
-echo "Buscando ventana con wmctrl..."
-wmctrl -l  # Debug: mostrar todas las ventanas
+echo "=== Buscando ventana ==="
+# Listar ventanas para debug
+wmctrl -l
 
-# Intentar varias veces (CI puede ser lento)
-for i in {1..10}; do
-    WID_HEX=$(wmctrl -l | grep -i "calculo" | awk '{print $1}')
-    if [ -n "$WID_HEX" ]; then
-        echo "Ventana encontrada en intento $i: $WID_HEX"
-        break
-    fi
-    echo "Intento $i: ventana no encontrada, esperando..."
-    sleep 2
+# Intentar encontrar la ventana
+MAX_ATTEMPTS=20
+WID_HEX=""
+for i in $(seq 1 $MAX_ATTEMPTS); do
+  WID_HEX=$(wmctrl -l | grep -i "calculo" | awk '{print $1}')
+  if [ -n "$WID_HEX" ]; then
+    echo "✓ Ventana encontrada en intento $i: $WID_HEX"
+    break
+  fi
+  echo "Intento $i/$MAX_ATTEMPTS: ventana no encontrada, esperando..."
+  sleep 1
 done
 
 if [ -z "$WID_HEX" ]; then
-    echo "ERROR: No se encontró la ventana después de 10 intentos"
-    echo "Ventanas disponibles:"
-    wmctrl -l
-    ps aux | grep calculo
-    kill $APP_PID 2>/dev/null
-    exit 1
+  echo "✗ ERROR: No se pudo encontrar la ventana después de $MAX_ATTEMPTS intentos"
+  echo "Ventanas disponibles:"
+  wmctrl -l
+  kill $APP_PID 2>/dev/null
+  exit 1
 fi
 
-# 6. Activar ventana
-echo "Activando ventana $WID_HEX..."
+# Activar ventana
+echo "Activando ventana: $WID_HEX"
 wmctrl -i -a "$WID_HEX"
 sleep 2
 
-# 7. Convertir a decimal para xdotool
-WID=$(printf "%d" "0x$WID_HEX")
-echo "WID decimal: $WID"
-
-# 8. Tomar captura inicial (con xwd que funciona mejor en Xvfb)
+# Tomar captura inicial
 echo "Tomando captura inicial..."
-xwd -id $WID -out images/00_inicio.xwd 2>/dev/null && 
-  convert images/00_inicio.xwd images/00_inicio.png 2>/dev/null || 
-  echo "Advertencia: No se pudo tomar captura inicial"
+xwd -id $WID_HEX -out images/00_inicio.xwd 2>/dev/null
+if [ -f images/00_inicio.xwd ]; then
+  convert images/00_inicio.xwd images/00_inicio.png 2>/dev/null
+  echo "✓ Captura inicial tomada"
+else
+  echo "⚠ No se pudo tomar captura inicial"
+fi
 
-# 9. Interacción con la aplicación
-echo "Iniciando interacción..."
+echo "=== Realizando pruebas de interacción ==="
 
-# --- MOLES ---
-echo "--> Probando Moles..."
-xdotool key --window $WID Tab Tab
-sleep 1
-xdotool type --window $WID "2.5"
-sleep 1
-xdotool key --window $WID Tab Tab
-sleep 1
-xdotool type --window $WID "300"
-sleep 1
+# Prueba 1: Campo Vp (Moles)
+xdotool windowactivate $WID_HEX
+sleep 0.5
+xdotool key Tab Tab
+sleep 0.5
+xdotool type "2.5"
+sleep 0.5
 
-# Captura Moles
-xwd -id $WID -out images/01_moles.xwd 2>/dev/null && 
+# Prueba 2: Campo Vt (Moles)
+xdotool key Tab Tab
+sleep 0.5
+xdotool type "300"
+sleep 0.5
+
+# Captura después de moles
+xwd -id $WID_HEX -out images/01_moles.xwd 2>/dev/null && \
   convert images/01_moles.xwd images/01_moles.png 2>/dev/null
 
 # Botón Test Específico
-xdotool key --window $WID Shift+Tab Shift+Tab Shift+Tab
-sleep 1
-xdotool key --window $WID space
+xdotool key Shift+Tab Shift+Tab Shift+Tab
+sleep 0.5
+xdotool key space
 sleep 2
 
-# --- DENSIDAD ---
-echo "--> Probando Densidad..."
-xdotool key --window $WID Tab Tab Tab Tab Tab Tab
-sleep 1
-xdotool type --window $WID "820000"
-sleep 1
-xdotool key --window $WID Tab Tab
-sleep 1
-xdotool type --window $WID "750"
-sleep 1
+# Prueba 3: Campo p (Densidad)
+xdotool key Tab Tab Tab Tab Tab Tab
+sleep 0.5
+xdotool type "820000"
+sleep 0.5
 
-# Captura Densidad
-xwd -id $WID -out images/02_densidad.xwd 2>/dev/null && 
+# Prueba 4: Campo Vt (Densidad)
+xdotool key Tab Tab
+sleep 0.5
+xdotool type "750"
+sleep 0.5
+
+# Captura después de densidad
+xwd -id $WID_HEX -out images/02_densidad.xwd 2>/dev/null && \
   convert images/02_densidad.xwd images/02_densidad.png 2>/dev/null
 
 # Botón Test Específico
-xdotool key --window $WID Shift+Tab Shift+Tab Shift+Tab
-sleep 1
-xdotool key --window $WID space
+xdotool key Shift+Tab Shift+Tab Shift+Tab
+sleep 0.5
+xdotool key space
 sleep 2
 
-# --- ENERGÍA ---
-echo "--> Probando Energía..."
-xdotool key --window $WID Tab Tab Tab Tab Tab Tab
-sleep 1
-xdotool type --window $WID "256"
-sleep 1
-xdotool key --window $WID Tab Tab
-sleep 1
-xdotool type --window $WID "8500000"
-sleep 1
+# Prueba 5: Campo A (Energía)
+xdotool key Tab Tab Tab Tab Tab Tab
+sleep 0.5
+xdotool type "256"
+sleep 0.5
 
-# Captura Energía
-xwd -id $WID -out images/03_energia.xwd 2>/dev/null && 
+# Prueba 6: Campo W (Energía)
+xdotool key Tab Tab
+sleep 0.5
+xdotool type "8500000"
+sleep 0.5
+
+# Captura después de energía
+xwd -id $WID_HEX -out images/03_energia.xwd 2>/dev/null && \
   convert images/03_energia.xwd images/03_energia.png 2>/dev/null
 
-# Botón Test Específico
-xdotool key --window $WID Shift+Tab Shift+Tab Shift+Tab
-sleep 1
-xdotool key --window $WID space
+# Botón Test Específico final
+xdotool key Shift+Tab Shift+Tab Shift+Tab
+sleep 0.5
+xdotool key space
 sleep 3
 
 # Captura final
-xwd -id $WID -out images/04_final.xwd 2>/dev/null && 
+xwd -id $WID_HEX -out images/04_final.xwd 2>/dev/null && \
   convert images/04_final.xwd images/04_final.png 2>/dev/null
 
-# 10. Limpieza
-echo "Finalizando..."
+echo "=== Finalizando ==="
 kill $APP_PID 2>/dev/null
 wait $APP_PID 2>/dev/null
 
-# 11. Verificar capturas
-echo "Resumen de capturas:"
-ls -la images/ || echo "No se creó la carpeta images"
-
-# Verificar que hay al menos una captura
-if ls images/*.png 1> /dev/null 2>&1; then
-    echo "✓ Capturas generadas correctamente"
+# Verificar resultados
+echo "=== Resumen ==="
+if [ -d "images" ]; then
+  PNG_COUNT=$(find images -name "*.png" | wc -l)
+  echo "Capturas PNG generadas: $PNG_COUNT"
+  if [ $PNG_COUNT -gt 0 ]; then
+    echo "✓ Test completado con éxito"
     exit 0
+  else
+    echo "⚠ Test completado pero sin capturas PNG"
+    exit 2
+  fi
 else
-    echo "⚠ No se generaron capturas PNG, pero puede que hayan .xwd"
-    # No salimos con error porque puede que la prueba funcione sin capturas
-    exit 0
+  echo "✗ No se creó la carpeta images"
+  exit 1
 fi
