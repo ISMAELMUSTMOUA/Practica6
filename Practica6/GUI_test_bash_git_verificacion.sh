@@ -123,7 +123,7 @@ xwd -id $WID -out images/03_energia.xwd 2>/dev/null && \
 
 # Botón final
 xdotool key Shift+Tab Shift+Tab Shift+Tab
-sleep 0.5
+sleep 1.5
 xdotool key space
 sleep 3
 
