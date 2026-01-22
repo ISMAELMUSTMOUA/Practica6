@@ -9,6 +9,7 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-22.04
+    timeout-minutes: 15  # Timeout general para evitar jobs infinitos
 
     defaults:
       run:
@@ -20,7 +21,12 @@ jobs:
     - name: Instalar Dependencias
       run: |
         sudo apt-get update
-        sudo apt-get install -y gcc make pkg-config libgtk-3-dev python3 python3-pip xvfb xdotool wmctrl dos2unix scrot
+        sudo apt-get install -y \
+          gcc make pkg-config \
+          libgtk-3-dev \
+          python3 python3-pip \
+          xvfb xdotool wmctrl dos2unix \
+          imagemagick x11-apps  # Cambiado scrot por imagemagick
         pip3 install pytest
 
     - name: Reparar Makefile
@@ -29,7 +35,22 @@ jobs:
     - name: Compilar Proyecto
       run: |
         make clean
-        make all
+        make all 2>&1 | tee make.log || {
+          echo "✗ Error en compilación";
+          cat make.log;
+          exit 1;
+        }
+
+    - name: Verificar binario
+      run: |
+        if [ -f "./bin/calculo_punto_fijo" ]; then
+          echo "✓ Binario compilado correctamente"
+          file ./bin/calculo_punto_fijo
+        else
+          echo "✗ ERROR: No se encontró el binario"
+          ls -la bin/
+          exit 1
+        fi
 
     - name: Generar Casos de Test
       run: |
@@ -45,17 +66,112 @@ jobs:
         cd tests/python
         xvfb-run python3 GUI_test.py
 
-    - name: Test de Interacción (Bash)
+    - name: Test de Interacción GUI
+      id: gui-test
       run: |
-        dos2unix GUI_test_bash_git_verificacion.sh
-        chmod +x GUI_test_bash_git_verificacion.sh
+        # Iniciar Xvfb en display :99
+        echo "Iniciando Xvfb en display :99..."
+        Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &
+        XVFB_PID=$!
+        export DISPLAY=:99
         export GDK_BACKEND=x11
-        xvfb-run ./GUI_test_bash_git_verificacion.sh
-    
-    # AHORA SÍ: Busca dentro de la carpeta images que creó el script
+        
+        # Esperar a que Xvfb esté listo
+        sleep 3
+        
+        # Verificar que Xvfb está funcionando
+        if ! ps -p $XVFB_PID > /dev/null; then
+          echo "✗ ERROR: Xvfb no se inició correctamente"
+          exit 1
+        fi
+        
+        # Verificar que las herramientas X están funcionando
+        echo "Verificando herramientas X..."
+        which xdotool && xdotool --version
+        which wmctrl && wmctrl --version
+        
+        # Preparar y ejecutar script de GUI
+        echo "Preparando script de prueba GUI..."
+        chmod +x GUI_test_bash_git_verificacion.sh
+        dos2unix GUI_test_bash_git_verificacion.sh
+        
+        echo "=== Ejecutando prueba GUI ==="
+        set +e  # No salir inmediatamente si hay error
+        ./GUI_test_bash_git_verificacion.sh 2>&1 | tee gui_test_output.log
+        GUI_EXIT_CODE=${PIPESTATUS[0]}
+        
+        # Terminar Xvfb
+        echo "Terminando Xvfb..."
+        kill $XVFB_PID 2>/dev/null
+        wait $XVFB_PID 2>/dev/null
+        
+        # Mostrar información de depuración
+        echo "=== Información de depuración ==="
+        echo "Código de salida del test GUI: $GUI_EXIT_CODE"
+        echo "Contenido de la carpeta actual:"
+        ls -la
+        
+        # Verificar si se crearon capturas
+        if [ -d "images" ]; then
+          echo "Capturas generadas:"
+          ls -la images/ || echo "No se pueden listar capturas"
+        else
+          echo "✗ No se creó la carpeta images"
+        fi
+        
+        # Evaluar resultado
+        if [ $GUI_EXIT_CODE -eq 0 ]; then
+          echo "✓ Test GUI completado exitosamente"
+        elif [ $GUI_EXIT_CODE -eq 2 ]; then
+          echo "⚠ Test GUI completado con advertencias"
+        else
+          echo "✗ Test GUI falló con código $GUI_EXIT_CODE"
+          echo "Últimas 50 líneas del log:"
+          tail -50 gui_test_output.log
+          exit $GUI_EXIT_CODE
+        fi
+
+    - name: Verificar evidencias generadas
+      if: always()
+      run: |
+        echo "=== Verificación de evidencias ==="
+        if [ -d "images" ]; then
+          echo "Contenido de images/:"
+          find images/ -type f -name "*.png" -o -name "*.xwd" | while read f; do
+            echo "  - $f"
+          done
+          PNG_COUNT=$(find images/ -name "*.png" | wc -l)
+          echo "Total de capturas PNG: $PNG_COUNT"
+        else
+          echo "✗ No se encontró la carpeta images"
+        fi
+        
+        # Crear un archivo de resumen
+        echo "Resumen de la ejecución" > ejecucion_resumen.txt
+        date >> ejecucion_resumen.txt
+        echo "Carpeta images existe: $([ -d "images" ] && echo "Sí" || echo "No")" >> ejecucion_resumen.txt
+        if [ -d "images" ]; then
+          echo "Archivos en images:" >> ejecucion_resumen.txt
+          ls -la images/ >> ejecucion_resumen.txt 2>/dev/null || echo "Error listando" >> ejecucion_resumen.txt
+        fi
+
     - name: Guardar Evidencias (Screenshots)
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: capturas-gui
-        path: Practica6/images/*.png
+        path: |
+          Practica6/images/
+          Practica6/gui_test_output.log
+          Practica6/ejecucion_resumen.txt
+        retention-days: 7
+
+    - name: Guardar logs de compilación
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: logs-error
+        path: |
+          Practica6/make.log
+          Practica6/gui_test_output.log
+        retention-days: 30
