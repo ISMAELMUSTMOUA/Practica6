@@ -23,7 +23,7 @@ Este proyecto está organizado en varios directorios, cada uno con una función 
   Almacena los archivos de cabecera (`.h`) del proyecto. Aquí se definen funciones, estructuras, constantes y prototipos utilizados en el código fuente.
 
 - **src/**
-  Incluye el código fuente principal del proyecto (`.c`, `.cpp`). Es el núcleo funcional de la práctica.
+  Incluye el código fuente principal del proyecto (`.c`, `.py`). Es el núcleo funcional de la práctica.
 
 - **tests/**
   Contiene los scripts y archivos necesarios para ejecutar pruebas automáticas del proyecto, como casos de prueba o configuraciones de test.
