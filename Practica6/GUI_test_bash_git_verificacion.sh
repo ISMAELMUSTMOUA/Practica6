@@ -1,28 +1,35 @@
 #!/bin/bash
 
-# 1. Configuración
+# 1. Configuración básica
 export GDK_BACKEND=x11
 
-# 2. Iniciar App
+# 2. Iniciar aplicación
 ./bin/calculo_punto_fijo &
 APP_PID=$!
 echo "App started with PID $APP_PID"
 
-# 3. CREAR LA CARPETA 'images' (Para que sea estático y ordenado)
+# 3. Crear carpeta para guardar las fotos (Evidencias)
 mkdir -p images
-echo "Carpeta 'images' asegurada."
 
-# 4. Esperar Ventana
+# ---------------------------------------------------------
+# CORRECCIÓN PRINCIPAL: CAMBIAMOS wmctrl POR xdotool LOOP
+# ---------------------------------------------------------
+# En GitHub Actions no hay Gestor de Ventanas, así que wmctrl falla siempre.
+# Usamos este bucle que busca directamente la ventana "a la fuerza".
+
 echo "Buscando ventana 'calculo'..."
 MAX_INTENTOS=20
 CONTADOR=0
 WID=""
 
 while [ -z "$WID" ]; do
+    # Buscamos cualquier ventana que tenga "calculo" en el nombre
     WID=$(xdotool search --name "calculo" 2>/dev/null | head -n 1)
+    
     if [ -n "$WID" ]; then break; fi
+    
     if [ $CONTADOR -ge $MAX_INTENTOS ]; then
-        echo "Timeout esperando ventana."
+        echo "ERROR: Timeout esperando ventana."
         kill $APP_PID 2>/dev/null
         exit 1
     fi
@@ -31,63 +38,91 @@ while [ -z "$WID" ]; do
 done
 
 echo "¡Ventana encontrada! ID: $WID"
+
+# --- TRUCO DEL FOCO (Vital para CI/CD) ---
+# Hacemos clic en el centro para asegurar que la ventana escucha el teclado
+xdotool mousemove --window $WID 100 100 click 1
 sleep 1
 
-# --- TEST 1: MOLES ---
-echo "--> Probando Moles..."
-xdotool key --window $WID Tab Tab 2>/dev/null
-xdotool type --window $WID "2.5" 2>/dev/null
-xdotool key --window $WID Tab Tab 2>/dev/null
-xdotool type --window $WID "300" 2>/dev/null
+# ---------------------------------------------------------
+# AQUÍ EMPIEZA TU LÓGICA DE NAVEGACIÓN (TUS TABS Y DATOS)
+# ---------------------------------------------------------
+
+echo "--> Pestaña 1: Moles..."
+# Ir al campo Vp
+xdotool key --window $WID Tab Tab
 sleep 0.5
-xdotool key --window $WID Return 2>/dev/null
-sleep 1
-# FOTO EN CARPETA IMAGES
+xdotool type --window $WID "2.5"
+sleep 0.5
+
+# Ir al campo Vt
+xdotool key --window $WID Tab Tab
+sleep 0.5
+xdotool type --window $WID "300"
+sleep 0.5
+
+# FOTO 1
 scrot "images/evidencia_1_moles.png"
-echo "Captura: images/evidencia_1_moles.png"
 
-# --- TEST 2: DENSIDAD ---
-echo "--> Cambiando a Densidad..."
-xdotool key --window $WID Shift+Tab Shift+Tab Shift+Tab 2>/dev/null
-sleep 0.2
-xdotool key --window $WID Right 2>/dev/null
-sleep 0.2
-xdotool key --window $WID space 2>/dev/null
-sleep 1
-
-xdotool key --window $WID Tab Tab Tab Tab Tab Tab 2>/dev/null
-xdotool type --window $WID "820000" 2>/dev/null
-xdotool key --window $WID Tab Tab 2>/dev/null
-xdotool type --window $WID "750" 2>/dev/null
+# --- CAMBIO DE PESTAÑA (Tu lógica) ---
+# Activar botón Test Específico (Shift+Tab x3 -> Espacio)
+xdotool key --window $WID Shift+Tab Shift+Tab Shift+Tab
 sleep 0.5
-xdotool key --window $WID Return 2>/dev/null
+xdotool key --window $WID Right  # AÑADIDO: A veces hace falta mover a la derecha en pestañas
+xdotool key --window $WID space
 sleep 1
-# FOTO EN CARPETA IMAGES
+
+# Clic de seguridad para recuperar foco
+xdotool mousemove --window $WID 100 100 click 1
+
+echo "--> Pestaña 2: Densidad..."
+# Ir al campo p densidad (Tu lógica: 6 Tabs)
+xdotool key --window $WID Tab Tab Tab Tab Tab Tab
+sleep 0.5
+xdotool type --window $WID "820000"
+sleep 0.5
+
+# Ir al campo Vt (Tu lógica: 2 Tabs)
+xdotool key --window $WID Tab Tab
+sleep 0.5
+xdotool type --window $WID "750"
+sleep 0.5
+
+# FOTO 2
 scrot "images/evidencia_2_densidad.png"
-echo "Captura: images/evidencia_2_densidad.png"
 
-# --- TEST 3: ENERGÍA ---
-echo "--> Cambiando a Energía..."
-xdotool key --window $WID Shift+Tab Shift+Tab Shift+Tab 2>/dev/null
-sleep 0.2
-xdotool key --window $WID Right 2>/dev/null
-sleep 0.2
-xdotool key --window $WID space 2>/dev/null
-sleep 1
-
-echo "--> Escribiendo datos Energía..."
-xdotool key --window $WID Tab Tab Tab Tab Tab Tab 2>/dev/null
-xdotool type --window $WID "256" 2>/dev/null
-sleep 0.2
-xdotool key --window $WID Tab Tab 2>/dev/null
-xdotool type --window $WID "8500000" 2>/dev/null
+# --- CAMBIO DE PESTAÑA ---
+xdotool key --window $WID Shift+Tab Shift+Tab Shift+Tab
 sleep 0.5
-xdotool key --window $WID Return 2>/dev/null
+xdotool key --window $WID Right # Mover a la siguiente pestaña
+xdotool key --window $WID space
 sleep 1
-# FOTO EN CARPETA IMAGES
-scrot "images/evidencia_3_energia.png"
-echo "Captura: images/evidencia_3_energia.png"
 
-# 5. Limpieza
+# Clic de seguridad
+xdotool mousemove --window $WID 100 100 click 1
+
+echo "--> Pestaña 3: Energía (Tus datos)..."
+# Ir al campo A energie (Tu lógica: 6 Tabs)
+xdotool key --window $WID Tab Tab Tab Tab Tab Tab
+sleep 0.5
+# TUS DATOS:
+xdotool type --window $WID "256"
+sleep 0.5
+
+# Ir al campo W
+xdotool key --window $WID Tab Tab
+sleep 0.5
+# TUS DATOS:
+xdotool type --window $WID "8500000"
+sleep 0.5
+
+# Simular ENTER final
+xdotool key --window $WID Return
+sleep 1
+
+# FOTO 3
+scrot "images/evidencia_3_energia.png"
+
+# Limpiar
 kill $APP_PID 2>/dev/null
-echo "Prueba completada con fotos organizadas."
+echo "Prueba completada"
