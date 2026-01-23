@@ -23,7 +23,7 @@ jobs:
           python3 python3-pip \
           xvfb xdotool wmctrl dos2unix \
           imagemagick x11-apps
-        pip3 install pytest dogtail
+        pip3 install pytest dogtail python3-cairo
 
     - name: Limpiar posibles locks de Xvfb
       run: |
