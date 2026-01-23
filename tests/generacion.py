@@ -190,7 +190,7 @@ with open("tests/data/density_test_cases.txt", "w") as f:
     
     for P_fixed, Vt_fixed, res, name in density_cases:
         f.write(f"{P_fixed:>7} {Vt_fixed:>10} {res:>12} {name:<20}\n")
-print(f" Se han generado {len(density_cases)} casos de densidad")
+print(f"Se han generado {len(density_cases)} casos de densidad")
 
 esc_A, esc_W, esc_res = get_scalings('energy')
 energy_cases = []

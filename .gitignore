@@ -1,6 +1,5 @@
-Practica6/bin/*
-Practica6/build/*
-Practica6/tests/data/*
+/bin/*
+/build/*
+/tests/data/*
 __pycache__/
 .pytest_cache/
-

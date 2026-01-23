@@ -7,7 +7,7 @@ so_path = "./bin/calculo_punto_fijo"
 if not os.path.exists(so_path):
     raise FileNotFoundError(f"No se encontró el archivo {so_path}")
 
-print(f"*** Comenzando Test de GUI ***")
+print(f"*** Comenzando Test de GUI básico ***")
 
 # Iniciar la aplicación como subproceso
 try:
