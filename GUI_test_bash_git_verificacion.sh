@@ -38,20 +38,12 @@ if [ -z "$WID" ]; then
 fi
 
 if [ -z "$WID" ]; then
-    echo "✗ No se pudo encontrar ninguna ventana"
-    
-    # Intentar captura de pantalla completa
-    echo "Intentando captura de pantalla completa..."
-    timeout 5 xwd -root -out images/fallback.xwd 2>/dev/null || true
-    if [ -f images/fallback.xwd ]; then
-        convert images/fallback.xwd images/fallback.png 2>/dev/null || true
-    fi
-    
+    echo "✗ No se pudo encontrar ninguna ventana" 
     kill $APP_PID 2>/dev/null
     exit 1
 fi
 
-echo "✓ Ventana encontrada: $WID"
+echo "Ventana encontrada: $WID"
 
 # Intentar activar
 xdotool windowactivate $WID 2>/dev/null || true
@@ -141,9 +133,9 @@ PNG_COUNT=$(ls images/*.png 2>/dev/null | wc -l || echo 0)
 echo "Capturas PNG: $PNG_COUNT"
 
 if [ $PNG_COUNT -gt 0 ]; then
-    echo "✓ Test completado"
+    echo "Test completado"
     exit 0
 else
-    echo "⚠ Test completado sin capturas"
+    echo "Test completado sin capturas"
     exit 2
 fi
