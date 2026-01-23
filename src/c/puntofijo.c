@@ -9,6 +9,7 @@
 #define FX_DIV(a,b,c) (((uint64_t)(a) << c) / (uint64_t)(b))
 #define FX_SQRT(x,c) punto_fijo_sqrt(x,c)
 
+/*
 uint32_t punto_fijo_sqrt(uint32_t valor,uint8_t escalado) {
     if (valor <= 0) return 0;  
     uint32_t resultado = valor / 2;
@@ -19,6 +20,7 @@ uint32_t punto_fijo_sqrt(uint32_t valor,uint8_t escalado) {
     }    
     return resultado;
 }
+*/
 
 void tam_moles(uint8_t * tams){
   tams[0]=28;
@@ -50,22 +52,6 @@ void calc_moles_fx(uint32_t Vp_fx,uint32_t Vt_fx,uint32_t *resultado) {
     float Vp=(float)Vp_fx/(1<<esc_Vp);
     float Vt=(float)Vt_fx/(1<<esc_Vt);
     
-    if (Vp <0.2  || Vp > 4.7){
-      
-      *resultado = 0;
-      printf("Valor de Vp fuera de rango\n");
-      return;
-    
-    
-    } else{
-      
-      if (Vt < 0 || Vt > 1500.0){
-
-       *resultado = 0;
-        printf("Valor de Vt fuera de rango\n");
-        return;
-
-      } else{
 
     //Cálculos en coma flotante (copiar desde comaflotante.c)
     const float R = 8.314; 
@@ -103,8 +89,8 @@ void calc_moles_fx(uint32_t Vp_fx,uint32_t Vt_fx,uint32_t *resultado) {
     printf("n:         %f,%f (guarda %.2f bits)\n",n,(float)n_fx/(1<<tams[2]),32-log2(n_fx));
         
     *resultado = n_fx;     
-    }
-  }
+    
+  
 }
 
 /* Densidad del Aire con Presión y Temperatura */
@@ -122,27 +108,9 @@ void calc_density_fx(uint32_t dato_P, uint32_t datoVt,uint32_t *resultado) {
     const float R = 287.0;    // J/(kg·K)
 
     float P_float = dato_P/(float)(1<<tams[0]); // Convertir a flotante
-      
-    if (P_float < 50e3 || P_float > 1.1e6){
-
-      *resultado = 0;
-       printf("Valor de P fuera de rango\n");
-       return;
-
-    } else{
-
     float P = (P_float - C0)/C1;
 
     float Vt_float = datoVt/(float)(1<<tams[1]); // Convertir a flotante
-      
-      if (Vt_float < 500 || Vt_float > 1750.0){
-         
-        *resultado = 0;
-         printf("Valor de Vt fuera de rango\n");
-         return;
-      
-        } else{
-
     float Tc = (Vt_float - 500)/10;
     float T = Tc + 273.15;
     float B = R*T;
@@ -171,8 +139,8 @@ void calc_density_fx(uint32_t dato_P, uint32_t datoVt,uint32_t *resultado) {
     printf("B:     %f,%f (guarda %.2f bits)\n",B,(float)B_fx/(1<<8),32-log2(B_fx));     
     printf("rho:   %f,%f (guarda %.2f bits)\n",rho,(float)rho_fx/(1<<tams[2]),32-log2(rho_fx));
     *resultado = rho_fx;
-      }
-    }
+
+
 }
 
 /* Energía Cinética con Aceleración y Peso */
@@ -183,27 +151,11 @@ void calc_kinetic_energy_fx(uint32_t dato_A, uint32_t dato_W,uint32_t *resultado
     const float t = 1.0;      // Tiempo fijo en s
 
     float A_float = dato_A/(float)(1<<8);
-        if (A_float < 0.0 || A_float > 500.0){
-          *resultado = 0;
-          printf("Valor de A fuera de rango\n");
-          return;
-        
-        } else{
-
     float A_g = (A_float*4)/1024;
     float A = A_g*9.81;
     float v = A * t;          // Velocidad en m/s
 
     float W_float = dato_W/(float)(1<<8);
-    if (W_float < 8388608 || W_float > 12e6){
-      
-      *resultado = 0;
-      printf("Valor de W fuera de rango\n");
-      
-      return;
-    
-    } else{
-
     float W_g = (W_float-8388608)/16777;
     float m = W_g/1000;
     float v2=v*v;
@@ -248,76 +200,4 @@ void calc_kinetic_energy_fx(uint32_t dato_A, uint32_t dato_W,uint32_t *resultado
 
   *resultado = Ek_fx;
   
-    }
-  }
 }
-
-
-/* Función principal para probar los ejercicios */
-void main_punto() {
-    // Ejercicio 1
-    uint8_t tams[3];
-    uint8_t tams_dens[3];
-    uint8_t tams_ener[3];
-    tam_moles(tams);
-    tam_dens(tams_dens);
-    tam_ener(tams_ener);
-    uint32_t salida;
-
-    float tabla[4][2] = {
-      {0.2,    0 },
-      {1.0,    200 },
-      {2.35,   298 },
-      {4.7,    1500}
-    };
-
-    float tabla_des[6][2] = {
-      {820000,     100},
-      {4100000,    75000},
-      {410265.890625, 369.46484375},
-      {559867.5546875, 126.421875},
-      {5100000,    79800},
-      {10000000,   159600}
-    };
-    
-    float tabla_ener[6][2] = {
-        {256.0, 8500000.0}, 
-        {12.7265625, 8841363.9453125},
-        {128000/(1<<8), 2304000000/(1<<8)}, 
-        {768, 10000000}, 
-        {0.09765625, 9000000.0}, 
-        {1280, 12000000}
-    };
-    printf("========== PRUEBA CALCULO DE NUMERO DE MOLES ==========\n");
-  for (int contador=0;contador<4;contador++){
-      uint32_t Vp_fx = round(tabla[contador][0] * (1<<tams[0]));        // V
-      uint32_t Vt_fx = round(tabla[contador][1]  * (1<<tams[1])); // mV
-      calc_moles_fx(Vp_fx, Vt_fx,&salida);
-      printf("Ejercicio 1 (%f %f) Numero de moles: %.6f mol\n\n", tabla[contador][0],tabla[contador][1], (float)salida/(1<<tams[2]));
-  }
-    printf("========== PRUEBA CALCULO DE DENSIDAD ==========\n");
-    for (int contador=0;contador<4;contador++){
-        uint32_t P = round(tabla_des[contador][0]*(1<<tams_dens[0]));
-        uint32_t Vt = round(tabla_des[contador][1]*(1<<tams_dens[1]));
-        calc_density_fx(P, Vt, &salida);
-        printf("Ejercicio 2(%f %f): %.6f kg/m^3\n\n", tabla_des[contador][0],tabla_des[contador][1], (float)salida/(1<<tams_dens[2]));
-    }
-
-    printf("========== PRUEBA CALCULO DE ENERGIA CINETICA ==========\n");
-    for (int contador=0;contador<4;contador++){
-        uint32_t A = round(tabla_ener[contador][0]*(1<<8));
-        uint32_t W = round(tabla_ener[contador][1]*(1<<8));
-        calc_kinetic_energy_fx(A, W, &salida);
-        printf("Ejercicio 3(%f %f): %.6f J\n\n", tabla_ener[contador][0],tabla_ener[contador][1], (float)salida/(1<<tams_ener[2]));
-    }
-   
-  
-  //return 0;
-}
-
-/*
-int main() {
-    main_punto();
-    return 0;
-}
-*/
