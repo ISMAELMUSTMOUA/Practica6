@@ -9,6 +9,7 @@
 #define FX_DIV(a,b,c) (((uint64_t)(a) << c) / (uint64_t)(b))
 #define FX_SQRT(x,c) punto_fijo_sqrt(x,c)
 
+/*
 uint32_t punto_fijo_sqrt(uint32_t valor,uint8_t escalado) {
     if (valor <= 0) return 0;  
     uint32_t resultado = valor / 2;
@@ -19,6 +20,7 @@ uint32_t punto_fijo_sqrt(uint32_t valor,uint8_t escalado) {
     }    
     return resultado;
 }
+*/
 
 void tam_moles(uint8_t * tams){
   tams[0]=28;

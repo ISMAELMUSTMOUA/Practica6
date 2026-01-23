@@ -6,7 +6,7 @@
 
 **Nombre de los integrantes:** Luis Valls Antón / Marcos Cantero Garcia / Ismael Mustafa Mouadeb
 
-**Fecha de entrega:** 20/01/2026
+**Fecha de entrega:** 23/01/2026
 
 ---
 
@@ -14,48 +14,84 @@
 
 ### Tipo de testeo utilizado
 
-Hemos utilizado una estrategia de **Caja Negra (Black Box Testing)** combinada con **Back-to-Back Testing**.
+Se han adoptado distintas estrategias de pruebas en función de la capa del sistema a implementar. En concreto: 
+
+  - Para la capa 3 (base) hemos realizado una estrategia de **Caja Negra (Black Box Testing)**.
+  - Mientras que para la capa 1 (GUI) hemos realizado una estrategia de **Caja Blanca (White Box Testing)**.
+
+Todas las pruebas se han llevado a cabo siguiendo una estrategia incremental de tipo bottom-up, en la que el proceso de verificación comienza por los módulos situados en los niveles inferiores de la jerarquía del sistema. 
 
 **Justificación:**
-1.  **Caja Negra:** Los tests se centran en verificar que, para una entrada dada, la salida es correcta según la especificación, sin depender de la estructura interna del algoritmo de punto fijo.
-2.  **Back-to-Back Testing:** He desarrollado un "Oráculo" o modelo de referencia en coma flotante (`libcomaflotante.so`). Los scripts de prueba (`genracion_de_testeo.py`) ejecutan la misma operación en el modelo de referencia y en la implementación bajo prueba (`libpuntofijo.so`), comparando ambos resultados para validar la precisión.
+1. **Caja negra (black-box):**
+Las pruebas se diseñan y ejecutan a partir de la especificación funcional del sistema, verificando que para un conjunto determinado de entradas la salida obtenida es la esperada. Este enfoque no considera la implementación interna, sino únicamente su comportamiento observable, lo que permite validar el cumplimiento de los requisitos sin introducir dependencias con la estructura interna del diseño.
+
+2. **Caja blanca (white-box):**
+Las pruebas se plantean con conocimiento de la implementación interna, permitiendo verificar no solo la corrección de las salidas, sino también la ejecución adecuada de los distintos caminos, operaciones y condiciones internas. Este tipo de test facilita detectar errores, problemas de cobertura y posibles casos no contemplados, asegurando que todas las partes relevantes del código han sido ejercitadas conforme a la especificación.
+
+3. **Estrategia bottom-up:**
+La estrategia de testeo bottom-up consiste en verificar inicialmente los módulos de menor nivel de forma aislada, utilizando drivers para simular su entorno. Una vez validados, estos módulos se emplean en los testeos subsiguientes. Este enfoque permite detectar errores de manera temprana en los componentes básicos y asegurar que cada bloque cumple su funcionalidad antes de formar parte del sistema completo.
+
 
 ### Técnicas de diseño de casos de test
 
 - **Particionado por equivalencias:**
-  En el script `genracion.py`, hemos llevado a cabo la generación de casos de prueba exhaustivos para validar el funcionamiento de nuestra implementación de los calculos en punto fijo. Las entradas se han dividido en distintas clases de equivalencia con el fin de explorar la mayor cantidad de valores posibles y obtener una buena cobertura. Hemos definido:
-  - **Valores habituales:** Valores dentro de los rangos establecidos (incluyendo los valores mínimo y máximo). Por ejemplo: en el caso de los moles valores comprendidos entre 0.2 < Vp < 4.7 y 0 < Vt < 1.5 
-  - **Valores frontera:** Valores por encima o por debajo de los rangos establicidos en el apartado anterior. Por ejemplo: en el caso de los moles sería emplear valores como Vp = 0.19 y Vt = 1.6.
-  - **Valores especiales:** Valores que raramente se darán pero que deben ser explorados para conocer el comportamiento de nuestro diseño. Por ejmplo: +- infinito, NaN, overflow, MAX_FLOAT.
+  Esta técnica de tipo `caja negra` nos permite dividir los datos de entrada en grupos válidos e inválidos, se asume que todos los valores dentro de una misma partición se comportan igual, permitiendo probar solo únicamente un valor.
+  En el script `generacion.py`, los casos de prueba generados seguían esta idea, pero tras llevar a cabo test exhaustivos con muchas cantidades de datos generados aleatoriamente (pero en un rango en el que deberían funcionar bien) se detectaron algunos errores inesperados. Por tanto, para validar realmente el funcionamiento de nuestra implementación de los calculos en punto fijo se llevan a cabo algunos casos de particionado por equivalencias pero también se generan multitud de test de valores aleatorios dentro de un rango. Las entradas se han dividido en distintas clases con el fin de explorar la mayor cantidad de valores posibles y obtener una buena cobertura. Hemos definido:
+  - **Valores habituales:** Valores de entrada que se encuentran dentro de los rangos establecidos por los datahseets de cada uno de los sensores (enlace a datasheets en las Referencias de la memoria). Por ejemplo: en el caso de los moles valores comprendidos entre 0.2 < Vp < 4.7 y 0 < Vt < 1.5 
   - **Valores aleatorios (wide):** Casos de test aleatorios comprendidos extrictamente en el rango de valores definido en el primer apartado, comprobamos que algunos casos no cumplen los tests por la combinación de valores generada.
-  - **Valores aleatorios (narrow):** Casos de test aleatorios comprendidos un rango de valores más limitado que el definido en el primer apartado, comprobamos que todos los casos cvumplen los tests.
+  - **Valores aleatorios (narrow):** Casos de test aleatorios comprendidos un rango de valores más limitado que el definido en el primer apartado, comprobamos que todos los casos cumplen los tests.
 
-- **Análisis de valores frontera:**
-  He identificado y probado específicamente los límites definidos en los requisitos para asegurar la robustez en los bordes:
-  - **Moles:** Vp=0.2 (min), Vp=4.7 (max), Vt=0, Vt=1500.
-  - **Densidad:** P=50.000, P=1.100.000, Vt=500.
-  - **Energía:** A=0 (límite exclusivo), W=8.388.608.
-  Además, se prueban valores inmediatamente adyacentes a estos límites (ej. 4.71 para comprobar el error).
+- **Valores frontera:** Para complementar la técnica de particionado por equivalencias se prueban los valores máximos y mínimos de cada caso y también, los valores que están inmediatamente por encima o por debajo de los rangos establicidos en el apartado anterior. Por ejemplo: en el caso de los moles sería emplear valores como Vp = 0.2 y Vt = 1.5 en el caso de los máximos y mínimos o Vp = 0.19 y Vt = 1.6 para los valores fuera de los límites.
 
-- **Otras técnicas (Tests de Sistema):**
-  - **Smoke Testing (Prueba de Humo):** Implementado en `GUI_test.py`. Verifica simplemente que la aplicación es capaz de arrancar, mantenerse en ejecución durante unos segundos y cerrarse limpiamente sin errores de memoria (Segmentation Fault).
-  - **Test de Interacción Automatizado:** Implementado en `GUI_test_bash.sh`. Simula un usuario real interactuando con la ventana mediante teclado y ratón.
+- **Casos especiales:** Valores que no se darán de forma habitual y que, por tanto, debemos forzar nosotros con el fin de ser explorados y conocer el comportamiento de nuestro diseño (la mayoría de casos darán error pero son casos que debemos comprobar). Por ejmplo: +- infinito, NaN, overflow, MAX_FLOAT.
+
+- **Formato tests generados** Cuando se generan los .txt con los casos de test se sigue el siguiente formato:
+
+  - **Entrada_1 | Entrada_2 | Salida | Tipo_test**
+
+  Nota 1: `tipo_test` nos indica si los valores de las entradas que vamos a introducir son valores normales, aleatorios (narrow/wide), límites o casos especiales.
+
+  Nota 2: hemos tomado una tolerancia del 6% para todos los casos y por eso no se especifica el criterio de aceptación en los casos de test (puesto que todos tienen el mismo).
+
+
+
+
+
+
+- **Otras técnicas (Tests a nivel de sistema):**
+  - **Prueba de arranque:** Implementado en `GUI_test.py`. Verifica simplemente que la aplicación es capaz de arrancar, mantenerse en ejecución durante unos segundos y cerrarse limpiamente sin errores de memoria (Segmentation Fault).
+  - **Test de interacción automático:** Implementado en `GUI_test_bash.sh`. Simula un usuario real interactuando con la ventana mediante teclado y ratón.
 
 ---
 
 ## b) Descripción de los tests implementados
 
+
+NOTA: si se quiere llevar a cabo alguna comprobación, se debe tener en cuenta de que en todo momento se trabaja desde el mismo directorio que el makefile. Tratar de realizar comprobaciones o llamadas desde otro directorio causará que no funcionen como deberían o como se espera.
+
+
 ### Tests de la capa base (cálculos en punto fijo)
 
+*Ejemplos de casos de test:*
 | Test | Entrada | Salida esperada | Tolerancia |
 |------|---------|-----------------|------------|
-| Moles Frontera Min | Vp=0.2, Vt=0.0 | Valor idéntico a float | 6% |
-| Moles Frontera Max | Vp=4.7, Vt=1500.0 | Valor idéntico a float | 6% |
-| Densidad Tabla | P=820000, Vt=750.0 | ~0.946 kg/m³ | 6% |
-| Energía Overflow | W=1.3e7 (Fuera rango) | 0 (Error) | N/A |
+| Moles Max | Vp=4.7, Vt=1500.0 | 0.497432 | 6% |
+| Densidad Frontera | P=49999, Vt=1751.0 | Error | 6% |
+| Energía Overflow | Overflow | Error | N/A |
+| Moles rand | Vp=1, Vt=200.0 | 0.127648 | 6% |
+
 
 *Descripción de los tests:*
-Estos tests se generan automáticamente mediante `genracion_de_testeo.py` y se ejecutan con `pytest`. Verifican las funciones `calc_moles_fx`, `calc_density_fx` y `calc_kinetic_energy_fx`. Se comprueba tanto la exactitud matemática (dentro del margen de error del punto fijo) como el rechazo de valores fuera de rango.
+
+Tal y como se ha comentado anteriormente, la estrategia que hemos elegido para llevar a cabo la verificación es una combinación de partciones por equivalencia, valores límites, casos especiales y una gran cantidad de valores aleatorios (un bucle que generan cientos de casos de test en un rango más amplio y otro bucle que los genera en un rango más estrcho) para poder llevar a cabo un estudio detallado. Todos estos casos se generan automáticamente mediante el script `generacion.py` y se almacenan en ficheros de texto en el directorio `data`como `x_test_cases.txt`. Posteriormente se comprueba si los resultados obtenidos son correctos realizando el `pytest`, de esta tarea se encarga el script `test_puntofijo.py`. Haciendo uso de esta herramienta hemos podido comprobar: 
+
+  - Si nuestra implementación de las operaciones en punto fijo es coorecta (obtenemos valores que se encuentran dentro del margen de error establecido, el cual es del 6%).
+  - Si efectivamente se rechazan los valores fuera de rango y los casos especiales oportunos. 
+  - Si se puede mejorar nuestra implementación.
+
+Referente al desarrollo del script `test_puntofijo.py` destacar que en un primer momento realizamos un código que empleaba la funcionalidad `fixtures` de pytest (marcar a las funciones como fuentes de datos) para llevar a cabo la verificación pero, nos encontramos con las problemática de que cada vez que detectaba un error dejaba de ejecutar los tests y de los cientos o miles que tenía que probar solo hacía unos cuantos (hasta que llegase a alguno de los casos donde nosotros forzamos el error). Por tanto, probamos algunas alternativas y finalmente realizamos la implementación mediante `mark.parametrizable` también de pytest y esta sí que nos permitió evaluar todos nuestros casos de test.
+
+
 
 ### Tests de la capa intermedia (funciones de interfaz)
 
@@ -86,11 +122,34 @@ Se han desarrollado dos scripts complementarios para asegurar la robustez de la 
 
 ## c) Resultados de la verificación
 
+A continuación, se presentan los resultados de la verificación:
+
 ### Capturas de pantalla de la ejecución de tests
 
-**(Captura de pantalla de la ejecución: `pytest pytest_cap1.py -v`)**
+**Verificación de la capa 3**
 
-![Captura Pytest](../images/captura_pytest.png)
+En primer lugar, se analizó la cobertura de código del script `puntofijo.c`, para ello se hizo uso de las herramientas `gcov` y `lcov` (esta la usaremos ya que nos permite generar reports en html más gráficos,como el que se muestra a continuación) y el resultado ha sido el siguiente:
+
+![Captura cobertura código](puntofijo_cov.png)
+
+Tal y como se puede apreciar obtenemos una cobertura de código del 100% (todas las lineas y funciones se ejecuutan), este report está disponible en el directorio `reports/coverage_report/c/puntofijo.c.func.html`. Y si queremos ver cuántas veces se ha ejecutado cada línea del código, se ha generado también un archivo `puntofijo.c.gcov`en `reports`.
+
+Una vez comprobada la cobertura de código pasamos a analizar la funcional mediante el uso del script `test_puntofijo`(dentro de este se ha hecho una llamada a las funciones de calculo_x para calcular el error respecto a la tolerancia, con el fin de poder sacar un report más simple y luego al pytest para sacar el report más detallado). En primer lugar, se sacan por el terminal todos los casos que se van a probar:
+
+![Captura Pytest](casos.png)
+
+Una vez se presentan todos los casos de text sale un report simple que nos informa de los casos totales, los exitosos, los fallidos, el porcentaje de éxito y también una lista de los casos que han fallado:
+
+![Captura Pytest](report.png)
+
+Una vez termina este report se llama a pytest y se realiza la comprobación más detallada:
+
+![Captura Pytest](pytest.png)
+
+Como se puede comprobar la mayoría de los casos pasan los test y pero hay casos que no, algunos debido a que son valores se encuentran fuera de los límites descritos, otros porque son casos especiales (que realmente no deben pasar los test) y otros que sí deberían pasarlos pero que no los pasan por imprecisiones en el desarrollo de `puntofijo.c` o de los rangos de las entradas de `moles, densidad y energía cinética`.
+
+
+
 
 **(Captura de pantalla de la ejecución: `./GUI_test_bash.sh`)**
 
@@ -103,31 +162,40 @@ Se han desarrollado dos scripts complementarios para asegurar la robustez de la 
 
 | Capa | Tests ejecutados | Tests pasados | Tests fallidos |
 |------|------------------|---------------|----------------|
-| Base (Moles) | 20 casos | 20 | 0 |
-| Base (Densidad)| 20 casos | 20 | 0 |
-| Base (Energía) | 20 casos | 20 | 0 |
+| Base (Moles) | 615 casos | 604 | 11 |
+| Base (Densidad)| 618 casos | 560 | 58 |
+| Base (Energía) | 618 casos | 603 | 15 |
 | GUI/Integración | 2 scripts (Py + Sh) | 2 | 0 |
 
 ### Análisis de errores (si los hay)
 
-Actualmente todos los tests pasan. Inicialmente, hubo errores de precisión en los bordes de los rangos debido al truncamiento de bits en punto fijo. Esto se solucionó ajustando la tolerancia al 6% en `pytest_cap1.py`, lo cual es aceptable para la especificación del sistema embebido simulado. También se ajustaron los rangos de entrada en los tests de densidad para coincidir con la lógica de validación de la aplicación.
+Tal y como se puede apreciar aunque nuestra implementación es correcta para la mayoría de casos de test que se prueban, esta no se encuentra libre de fallos y principalmente en los cálculos de densidad presenta más errores que en el resto de casos. Algunos de los errores han sido introducidos a mano para probar casos los especiales y valores fuera de rango, pero otros no deberían darse pues son valores aleatorios que en principio deberían ser válidos (se encuentran dentro del rango). A la hora de crear los rangos de valores de las entradas hemos puesto los valores que hemos consultado en los datasheet pero los resultados nos hacen pensar que estos deben ser ajustados un poco. Por otro lado, también podríamos volver a revisar los rangos y los bits empleados en las operaciones realizadas en puntofijo.c y ver si se pueden mejorar los resultados.  
 
 ---
 
 ## d) Conclusiones
 
-### Cobertura alcanzada
+Finalmente, concluiremos este informe destacando los siguientes aspectos:
 
-Hemos alcanzado una **cobertura funcional del 100%** de los requisitos especificados (los 3 ejercicios).
-- Se han verificado todos los caminos de éxito (cálculo correcto).
-- Se han verificado los caminos de fallo (valores fuera de rango).
-- Se ha verificado la interfaz gráfica completa (navegación por pestañas y botones).
+### En cuanto a la cobertura alcanzada
+
+`Cobertura de código:`
+
+- Hemos explorado herramientas que nos permiten estudiarla como son -gcov o -lcov.
+
+- Hemos alcanzado una cobertura del 100% (en puntofijo.c).
+
+`Cobertura funcional:`
+
+- Se ha verificado cada capa independientemente en distintos escenarios y un gran cantidad de casos de test.
+- Se han empleado scripts y herramientas específicas (pytest...).
 
 ### Lecciones aprendidas
 
-1.  La importancia de separar el entorno de pruebas del entorno de producción: usar un modelo en coma flotante para validar el código C en punto fijo ha sido esencial.
-2.  La complejidad de testear interfaces gráficas (GUI): herramientas como `wmctrl` y `xdotool` son potentes pero sensibles al entorno (Wayland vs X11).
-3.  La necesidad de definir tolerancias claras al trabajar con aritmética de punto fijo debido a los errores de cuantificación.
+1. Es imprescindible tener una buena y clara estructuracion del proyeto tanto a nivel de codigo fuente y como a nivel de directorios.
+2. Hemos conseguido afianzar nuestros conocimientos sobre los sistema de control de versiones (git y github) para un mejor trabajo en equipo de forma paralela.
+3. Hemos aprendido la forma de realizar scripts de pruebas automatizadas para poder llevar a cabo test de forma más rápida y escalable.
+
 
 ### Mejoras propuestas
 
@@ -140,7 +208,16 @@ Hemos alcanzado una **cobertura funcional del 100%** de los requisitos especific
 
 1. Apuntes de la asignatura: Tema 7 - Validación y Verificación.
 2. Documentación oficial de Pytest: https://docs.pytest.org/
-3. Manual de usuario de `xdotool` y `wmctrl` para automatización en Linux.
+3. Preguntas varias: https://stackoverflow.com/questions
 4. Myers, G. J. (2012). The Art of Software Testing.
+5. Datasheet del MPX5700AP: https://www.nxp.com/docs/en/data-sheet/MPX5700.pdf
+6. Datasheet del LM35: https://www.ti.com/lit/ds/symlink/lm35.pdf?ts=1769101168972&ref_url=https%253A%252F%252Fwww.ti.com%252Fproduct%252FLM35
+7. Datasheet del BMP280: https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bmp280-ds001.pdf
+8. Datasheet del TMP36: https://www.analog.com/media/en/technical-documentation/data-sheets/tmp35_36_37.pdf
+9. Datasheet del ADXL345: https://www.analog.com/media/en/technical-documentation/data-sheets/adxl345.pdf
+10. Datasheet del HX711: https://cdn.sparkfun.com/datasheets/Sensors/ForceFlex/hx711_english.pdf
+
+11. Elección de pytest.mark.parametrizable sobre pytest.fixtures: https://stackoverflow.com/questions/60369047/pytest-using-parametized-fixture-vs-pytest-mark-parametrize
+
 
 ---
