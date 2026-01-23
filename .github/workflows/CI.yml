@@ -26,11 +26,11 @@ jobs:
           python3-cairo
         pip3 install pytest dogtail 
 
-    - name: Limpiar posibles locks de Xvfb
+    - name: Limpiar Xvfb
       run: |
-        # Limpiar locks de displays anteriores
+        sudo pkill Xvfb || true
         sudo rm -f /tmp/.X99-lock
-        sudo rm -f /tmp/.X0-lock
+        sudo rm -f /tmp/.X*-lock
 
     - name: Reparar Makefile
       run: dos2unix makefile
@@ -50,29 +50,22 @@ jobs:
           echo "✓ Binario compilado correctamente"
           file ./bin/calculo_punto_fijo
         else
-          echo "✗ ERROR: No se encontró el binario"
+          echo "ERROR: No se encontró el binario"
           ls -la bin/
           exit 1
         fi
 
     - name: Generar Casos de Test
-      run: |
-        python3 ./tests/generacion.py
+      run: python3 ./tests/generacion.py
 
     - name: Ejecutar Pytest
-      run: |
-        python3 tests/test_puntofijo.py
+      run: python3 tests/test_puntofijo.py
 
     - name: Smoke Test GUI (Python)
       run: |
-        # Usar display diferente para evitar conflictos
-        xvfb-run --server-args="-screen 0 1024x768x24" python3 ./tests/test_GUI_basic.py
-    - name: Limpiar Xvfb
-      run: | 
-        sudo pkill Xvfb || true 
-        sudo rm -f /tmp/.X99-lock sudo 
-        rm -f /tmp/.X*-lock
-        
+        xvfb-run --auto-servernum --server-args="-screen 0 1024x768x24" \
+          python3 ./tests/test_GUI_basic.py
+
     - name: Test GUI With Dogtail (Python)
       run: |
         export DISPLAY=:99
@@ -83,42 +76,24 @@ jobs:
     - name: Test de Interacción GUI (bash)
       id: gui-test
       run: |
-        # Usar xvfb-run que maneja automáticamente el servidor
-        echo "Preparando script de prueba GUI..."
         chmod +x GUI_test_bash_git_verificacion.sh
         dos2unix GUI_test_bash_git_verificacion.sh
-        
-        echo "=== Ejecutando prueba GUI ==="
-        # xvfb-run maneja automáticamente el servidor Xvfb
+
         xvfb-run --auto-servernum --server-args="-screen 0 1024x768x24" \
           ./GUI_test_bash_git_verificacion.sh 2>&1 | tee gui_test_output.log
-        
+
         EXIT_CODE=${PIPESTATUS[0]}
-        
-        # Mostrar información de depuración
-        echo "=== Información de depuración ==="
+
         echo "Código de salida del test GUI: $EXIT_CODE"
-        echo "Contenido de la carpeta actual:"
-        ls -la
-        
-        # Verificar si se crearon capturas
+
         if [ -d "images" ]; then
           echo "Capturas generadas:"
-          ls -la images/ || echo "No se pueden listar capturas"
-          echo "Número de capturas PNG:"
-          find images/ -name "*.png" | wc -l
+          ls -la images/
         else
           echo "No se creó la carpeta images"
         fi
-        
-        # Evaluar resultado
-        if [ $EXIT_CODE -eq 0 ]; then
-          echo "Test GUI completado exitosamente"
-        elif [ $EXIT_CODE -eq 2 ]; then
-          echo "Test GUI completado con advertencias"
-        else
-          echo "Test GUI falló con código $EXIT_CODE"
-          echo "Últimas 50 líneas del log:"
+
+        if [ $EXIT_CODE -ne 0 ]; then
           tail -50 gui_test_output.log
           exit $EXIT_CODE
         fi
@@ -126,12 +101,8 @@ jobs:
     - name: Verificar evidencias generadas
       if: always()
       run: |
-        echo "=== Verificación de evidencias ==="
         if [ -d "images" ]; then
-          echo "Contenido de images/:"
           ls -la images/
-          echo "Archivos PNG encontrados:"
-          find images/ -name "*.png" -exec echo "  - {}" \;
         else
           echo "✗ No se encontró la carpeta images"
         fi
