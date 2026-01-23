@@ -23,10 +23,12 @@ Hemos utilizado una estrategia de **Caja Negra (Black Box Testing)** combinada c
 ### Técnicas de diseño de casos de test
 
 - **Particionado por equivalencias:**
-  En el script `genracion_de_testeo.py`, he dividido las entradas en clases de equivalencia para reducir el número de pruebas necesarias sin perder cobertura. He definido:
-  - **Clase válida pequeña:** Valores bajos dentro del rango (ej. Vp entre 0.2 y 2.0).
-  - **Clase válida mediana:** Valores de operación estándar (ej. Vp entre 2.0 y 4.5).
-  - **Clase inválida:** Valores fuera de los rangos permitidos para verificar el manejo de errores (retorno 0).
+  En el script `genracion.py`, hemos llevado a cabo la generación de casos de prueba exhaustivos para validar el funcionamiento de nuestra implementación de los calculos en punto fijo. Las entradas se han dividido en distintas clases de equivalencia con el fin de explorar la mayor cantidad de valores posibles y obtener una buena cobertura. Hemos definido:
+  - **Valores habituales:** Valores dentro de los rangos establecidos (incluyendo los valores mínimo y máximo). Por ejemplo: en el caso de los moles valores comprendidos entre 0.2 < Vp < 4.7 y 0 < Vt < 1.5 
+  - **Valores frontera:** Valores por encima o por debajo de los rangos establicidos en el apartado anterior. Por ejemplo: en el caso de los moles sería emplear valores como Vp = 0.19 y Vt = 1.6.
+  - **Valores especiales:** Valores que raramente se darán pero que deben ser explorados para conocer el comportamiento de nuestro diseño. Por ejmplo: +- infinito, NaN, overflow, MAX_FLOAT.
+  - **Valores aleatorios (wide):** Casos de test aleatorios comprendidos extrictamente en el rango de valores definido en el primer apartado, comprobamos que algunos casos no cumplen los tests por la combinación de valores generada.
+  - **Valores aleatorios (narrow):** Casos de test aleatorios comprendidos un rango de valores más limitado que el definido en el primer apartado, comprobamos que todos los casos cvumplen los tests.
 
 - **Análisis de valores frontera:**
   He identificado y probado específicamente los límites definidos en los requisitos para asegurar la robustez en los bordes:

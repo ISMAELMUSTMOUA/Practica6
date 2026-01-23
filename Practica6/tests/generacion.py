@@ -4,6 +4,7 @@ import ctypes
 import math
 import random
 import os
+import sys
 
 
 so_path = "./build/libpuntofijo.so"
@@ -45,18 +46,21 @@ def float_to_fixed(value, fractional_bits):
     if math.isnan(value) or math.isinf(value):
         return 0
     
+    max_int = 0xFFFFFFFF  
+    min_int = 0
+    
     scaled = value * (1 << fractional_bits)
-    #Para evitar overflow (2^32 bits)
-    if scaled > 4294967295: 
-        return 4294967295
-    elif scaled < 0:
-        return 0
+    
+    if scaled > max_int:
+        return max_int
+    elif scaled < min_int:
+        return min_int
     return int(scaled)
 
 RANGOS = {
     'moles': {'Vp_min': 0.2, 'Vp_max': 4.7, 'Vt_min': 0.0, 'Vt_max': 1500.0},
-    'density': {'P_min': 50000.0, 'P_max': 1100000.0, 'Vt_min': 500.0, 'Vt_max': 1750.0},
-    'energy': {'A_min': 0.0, 'A_max': 500.0, 'W_min': 8388608.0, 'W_max': 12000000.0}
+    'density': {'P_min': 50000.0, 'P_max': 110000.0, 'Vt_min': 100.0, 'Vt_max': 1750.0},
+    'energy': {'A_min': 0, 'A_max': 512.0, 'W_min': 8388608.0, 'W_max': 16777216}
 }
 
 def in_range(func_name, val1, val2):
@@ -74,25 +78,43 @@ moles_cases = []
 
 tabla_moles = [
     (0.2, 0.2, "min"),
-    (4.7, 1500.0, "max"),
-    (2.35, 298.0, "caso_normal")
+    (1, 200.0, "caso_normal"),
+    (2.35, 298.0, "caso_normal_2"),
+    (4.7, 1500.0, "max")
+    
 ]
 
 limites_moles = [
     (0.19, 100.0, "limite_Vp_low"),
     (5.0, 100.0, "limite_Vp_high"),
     (2.0, 1600.0, "limite_Vt_high"),
-    (2.5, 0.0, "limite_Vt_min"),
-    (2.5, -100.0, "limite_Vt_below")
+    (2.5, 0.0, "limite_Vt_min")
+]
+
+
+especiales_moles = [
+    (sys.float_info.max, sys.float_info.max, "MAX_float"),
+    (float('inf'), float('inf'), "infinito"),
+    (float('-inf'), float('-inf'), "menos_infinito"),
+    (float('nan'), 100.0, "NAN_val"),
+    ((0xFFFFFFFF+1) , (0xFFFFFFFF+1), "INT_overflow"),
+    (0.0,0.0, "cero"),
+    (1.0,1.0, "uno")
 ]
 
 random_moles = []
-for i in range(100):
-    Vp = random.uniform(0.2, 4.7)
+for i in range(300):
+    Vp = random.uniform(0.2, 4.5)
     Vt = random.uniform(0.0, 1500.0)
-    random_moles.append((Vp, Vt, f"rand_valid_{i}"))
+    random_moles.append((Vp, Vt, f"rand_wide_{i}"))
 
-all_moles_inputs = tabla_moles + limites_moles + random_moles
+random_moles2 = []
+for j in range(300):
+    Vp = random.uniform(1.5, 3)
+    Vt = random.uniform(500, 1000.0)
+    random_moles2.append((Vp, Vt, f"rand_narrow_{j}"))
+
+all_moles_inputs = tabla_moles + limites_moles + especiales_moles + random_moles + random_moles2
 
 for Vp, Vt, name in all_moles_inputs:
     if in_range('moles', Vp, Vt):
@@ -103,37 +125,57 @@ for Vp, Vt, name in all_moles_inputs:
     moles_cases.append((float_to_fixed(Vp, esc_Vp), float_to_fixed(Vt, esc_Vt), exp_fx, name))
 
 with open("tests/data/moles_test_cases.txt", "w") as f:
-    f.write(f"{'Vp':^10} {'Vt':^10} {'Resultado':^12} {'Tipo':^16}\n")
+    f.write(f"{'#Vp':^10} {'Vt':^10} {'Resultado':^12} {'Tipo':^16}\n")
     
     for vp, vt, res, name in moles_cases:
         f.write(f"{vp:>10} {vt:>10} {res:>12} {name:<20}\n")
-print(f" Se han generado {len(moles_cases)} casos de moles")
+print(f"\nSe han generado {len(moles_cases)} casos de moles")
 
 esc_P, esc_Vt, esc_res = get_scalings('density')
 density_cases = []
 
 tabla_density = [
-    (820000.0, 750.0, "table_820k_750"),
-    (4100000.0, 75000.0, "table_4.1M_inv"),    
-    (5100000.0, 79800.0, "table_5.1M_inv"),   
-    (10000000.0, 159600.0, "table_10M_inv"), 
+    (50000.0, 750.0, "limite_P_min"),  
+    (82000.0, 100.0, "limite_Vt_min"),  
+    (82000.0, 750.0, "caso_normal_1"),
+    (41000.0, 750.0, "caso_normal_2"),    
+    (51000.0, 780.0, "caso_normal_3"),   
+    (110000.0, 750.0, "limite_P_max"),     
+    (82000.0, 1750.0, "limite_Vt_max"), 
 ]
 
 limites_density = [
-    (50000.0, 750.0, "limite_P_min"),       
-    (1100000.0, 750.0, "limite_P_max"),     
-    (820000.0, 500.0, "limite_Vt_min"),      
-    (820000.0, 1750.0, "limite_Vt_max"),    
-    (49999.0, 750.0, "limite_P_below") 
+   
+    (49999.0, 750.0, "limite_P_below"),
+    (82000.0, 99.0, "limite_Vt_below"),
+    (110001.0, 750.0, "limite_P_above"),
+    (82000.0, 1751.0, "limite_Vt_above")
+
+]
+
+especiales_dens = [
+    (sys.float_info.max, sys.float_info.max, "MAX_float"),
+    (float('inf'), float('inf'), "infinito"),
+    (float('-inf'), float('-inf'), "menos_infinito"),
+    (float('nan'), 100.0, "NAN_val"),
+    ((0xFFFFFFFF+1) , (0xFFFFFFFF+1), "INT_overflow"),
+    (0.0,0.0, "cero"),
+    (1.0,1.0, "uno")
 ]
 
 random_density = []
-for i in range(11):
-    P = random.uniform(50000.0, 1100000.0)
-    Vt = random.uniform(500.0, 1750.0)     
-    random_density.append((P, Vt, f"rand_valid_{i}"))
+for i in range(300):
+    P = random.uniform(50000.0, 110000.0)
+    Vt = random.uniform(250.0, 1750.0)     
+    random_density.append((P, Vt, f"rand_wide_{i}"))
 
-all_density_inputs = tabla_density + limites_density + random_density
+random_density2 = []
+for i in range(300):
+    P = random.uniform(75000.0, 100000.0)
+    Vt = random.uniform(500.0, 1500.0)     
+    random_density.append((P, Vt, f"rand_narrow_{i}"))
+
+all_density_inputs = tabla_density + limites_density + especiales_dens + random_density + random_density2
 
 for P, Vt, name in all_density_inputs:
     if in_range('density', P, Vt):
@@ -144,7 +186,7 @@ for P, Vt, name in all_density_inputs:
     density_cases.append((float_to_fixed(P, esc_P), float_to_fixed(Vt, esc_Vt), exp_fx, name))
 
 with open("tests/data/density_test_cases.txt", "w") as f:
-    f.write(f"{'P':^11} {'Vt':^10} {'Resultado':^12} {'Tipo':^15}\n")
+    f.write(f"{'#P':^11} {'Vt':^10} {'Resultado':^12} {'Tipo':^15}\n")
     
     for P_fixed, Vt_fixed, res, name in density_cases:
         f.write(f"{P_fixed:>7} {Vt_fixed:>10} {res:>12} {name:<20}\n")
@@ -154,27 +196,47 @@ esc_A, esc_W, esc_res = get_scalings('energy')
 energy_cases = []
 
 tabla_energy = [
-    (256.0, 8500000.0, "table_256_8.5M"),
-    (768.0, 10000000.0, "table_768_inv"),   
-    (1024.0, 11000000.0, "table_1024_inv"), 
-    (1280.0, 12000000.0, "table_1280_inv"), 
+    (0.1, 9000000.0, "limite_A_min"),        
+    (128.0, 8388608.0, "limite_W_min"),      
+    (256.0, 8500000.0, "caso_normal_1"),
+    (128.0, 10000000.0, "caso_normal_2"),   
+    (256.0, 11000000.0, "caso_normal_3"), 
+    (512.0, 9000000.0, "limite_A_max"), 
+    (250.0, 16777216.0, "limite_W_max"), 
 ]
 
 limites_energy = [
-    (0.1, 9000000.0, "limite_A_min"),        
-    (500.0, 9000000.0, "limite_A_max"),      
-    (250.0, 8388608.0, "limite_W_min"),      
-    (250.0, 12000000.0, "limite_W_max"),     
-    (500.1, 9000000.0, "limite_A_over") 
+    (0.0, 9000000.0, "limite_A_below"),
+    (513.0, 9000000.0, "limite_A_over"),
+    (256, 8388607.0, "limite_W_below"),
+    (513.0, 16777217.0, "limite_W_over")
+
 ]
 
-random_energy = []
-for i in range(11):
-    A = random.uniform(1.0, 500.0) 
-    W = random.uniform(8388608.0, 12000000.0)
-    random_energy.append((A, W, f"rand_valid_{i}"))
+especiales_ener= [
+    (sys.float_info.max, sys.float_info.max, "MAX_float"),
+    (float('inf'), float('inf'), "infinito"),
+    (float('-inf'), float('-inf'), "menos_infinito"),
+    (float('nan'), 100.0, "NAN_val"),
+    ((0xFFFFFFFF+1) , (0xFFFFFFFF+1), "INT_overflow"),
+    (0.0,0.0, "cero"),
+    (1.0,1.0, "uno")
+]
 
-all_energy_inputs = tabla_energy + limites_energy + random_energy
+
+random_energy = []
+for i in range(300):
+    A = random.uniform(0, 512) 
+    W = random.uniform(8388608.0, 16777216.0)
+    random_energy.append((A, W, f"rand_wide_{i}"))
+
+random_energy2 = []
+for i in range(300):
+    A = random.uniform(128, 256) 
+    W = random.uniform(8500000.0, 12000000.0)
+    random_energy.append((A, W, f"rand_narrow_{i}"))
+
+all_energy_inputs = tabla_energy + limites_energy + especiales_ener + random_energy + random_energy2
 
 for A, W, name in all_energy_inputs:
     if in_range('energy', A, W):
@@ -185,8 +247,8 @@ for A, W, name in all_energy_inputs:
     energy_cases.append((float_to_fixed(A, esc_A), float_to_fixed(W, esc_W), exp_fx, name))
 
 with open("tests/data/energy_test_cases.txt", "w") as f:
-    f.write(f"{'A':^10} {'W':^12} {'Resultado':^12} {'Tipo':^12}\n")
+    f.write(f"{'#A':^10} {'W':^12} {'Resultado':^12} {'Tipo':^12}\n")
     
     for A_fixed, W_fixed, res, name in energy_cases:
         f.write(f"{A_fixed:>7} {W_fixed:>14} {res:>11} {name:<20}\n")
-print(f" Se han generado {len(energy_cases)} casos de energia cinetica")
+print(f"Se han generado {len(energy_cases)} casos de energia cinetica\n")

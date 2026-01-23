@@ -45,7 +45,8 @@ test_capa2: $(BUILD)/libpuntofijo.so
 	pytest ./tests/pytest_cap2.py
 
 test_capa3: $(BUILD)/libpuntofijo.so
-	pytest ./tests/pytest_cap3.py
+	python3 ./tests/test_puntofijo.py
+	
 
 
 run: $(BIN)/$(EXE)
