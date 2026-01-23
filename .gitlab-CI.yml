@@ -17,34 +17,31 @@ prueba_completa:
   before_script:
     - apt-get update
     - apt-get install -y gcc make pkg-config libgtk-3-dev python3 python3-pip xvfb xdotool dos2unix
-    - pip3 install pytest
+    - pip3 install pytest dogtail
 
-  script:
-    # 1. ENTRAR EN LA CARPETA (Equivalente a working-directory)
-    - cd Practica6
-    
-    # 2. Reparar formatos (Windows -> Linux)
+  script:  
+
     - dos2unix makefile GUI_test_bash.sh
     
-    # 3. Compilar (Limpiando primero)
+    # 1. Compilar y limpiar
     - make clean
     - make all
-    
-    # 4. Generar Datos de Test
-    - mkdir -p tests/data
-    - python3 generacion_de_testeo.py
-    
-    # 5. Tests Unitarios (Pytest)
-    # Como tu python ya tiene las rutas bien, no necesitamos 'sed'
-    - pytest tests/python/pytest_cap3.py -v
-    
-    # 6. Smoke Test GUI (Python)
     # Entramos a la carpeta para que las rutas relativas del script funcionen
-    - cd tests/python
-    - xvfb-run python3 GUI_test.py
-    - cd ../..  # Volvemos a la carpeta Practica6
+    - cd tests/
+    # 2. Generar Datos de Test
+    - python3 generacion.py
     
-    # 7. Test de Interacción (Bash)
+    # 3. Tests Unitarios (Pytest)
+    - python3 test_puntofijo.py
+    
+    # 4. Smoke Test GUI (Python)
+    - xvfb-run python3 test_GUI_basic.py
+
+    #5.Test de de Interacción (Python)
+    - xvfb-run python3 test_GUI_dogtial.py    
+    - cd ..  # Volvemos a la carpeta incial
+    
+    # 5. Test de Interacción (Bash)
     - chmod +x GUI_test_bash.sh
     - export GDK_BACKEND=x11
     - xvfb-run ./GUI_test_bash.sh
