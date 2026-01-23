@@ -2,18 +2,14 @@ name: Validación Automática Práctica 6
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "main", "master", "dev" ]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: [ "main", "master", "dev" ]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-22.04
     timeout-minutes: 15
-
-    defaults:
-      run:
-        working-directory: ./Practica6
 
     steps:
     - uses: actions/checkout@v3
@@ -27,7 +23,7 @@ jobs:
           python3 python3-pip \
           xvfb xdotool wmctrl dos2unix \
           imagemagick x11-apps
-        pip3 install pytest
+        pip3 install pytest dogtail
 
     - name: Limpiar posibles locks de Xvfb
       run: |
@@ -60,20 +56,23 @@ jobs:
 
     - name: Generar Casos de Test
       run: |
-        mkdir -p tests/data
-        python3 generacion_de_testeo.py
+        python3 ./tests/generacion.py
 
     - name: Ejecutar Pytest
       run: |
-        pytest tests/python/pytest_cap3.py -v
+        python3 tests/test_puntofijo.py
 
     - name: Smoke Test GUI (Python)
       run: |
-        cd tests/python
         # Usar display diferente para evitar conflictos
-        xvfb-run --server-args="-screen 0 1024x768x24" python3 GUI_test.py
+        xvfb-run --server-args="-screen 0 1024x768x24" python3 ./tests/test_GUI_basic.py
 
-    - name: Test de Interacción GUI
+    - name: Smoke Test GUI (Python)
+      run: |
+        # Usar display diferente para evitar conflictos
+        xvfb-run --server-args="-screen 0 1024x768x24" python3 ./tests/test_GUI_dogtail.py
+
+    - name: Test de Interacción GUI (bash)
       id: gui-test
       run: |
         # Usar xvfb-run que maneja automáticamente el servidor
@@ -101,16 +100,16 @@ jobs:
           echo "Número de capturas PNG:"
           find images/ -name "*.png" | wc -l
         else
-          echo "✗ No se creó la carpeta images"
+          echo "No se creó la carpeta images"
         fi
         
         # Evaluar resultado
         if [ $EXIT_CODE -eq 0 ]; then
-          echo "✓ Test GUI completado exitosamente"
+          echo "Test GUI completado exitosamente"
         elif [ $EXIT_CODE -eq 2 ]; then
-          echo "⚠ Test GUI completado con advertencias"
+          echo "Test GUI completado con advertencias"
         else
-          echo "✗ Test GUI falló con código $EXIT_CODE"
+          echo "Test GUI falló con código $EXIT_CODE"
           echo "Últimas 50 líneas del log:"
           tail -50 gui_test_output.log
           exit $EXIT_CODE
@@ -135,8 +134,8 @@ jobs:
       with:
         name: capturas-gui
         path: |
-          Practica6/images/
-          Practica6/gui_test_output.log
+          images/
+          gui_test_output.log
         retention-days: 7
 
     - name: Guardar logs de compilación
@@ -145,6 +144,6 @@ jobs:
       with:
         name: logs-error
         path: |
-          Practica6/make.log
-          Practica6/gui_test_output.log
+          make.log
+          gui_test_output.log
         retention-days: 30
