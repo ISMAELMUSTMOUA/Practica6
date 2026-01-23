@@ -30,13 +30,16 @@ int main(int argc, char *argv[]) {
    
     GtkWidget *btn_test_auto = gtk_button_new_with_label("Test automático");
     g_signal_connect(btn_test_auto, "clicked", G_CALLBACK(on_test_auto_moles_clicked), window);
+    gtk_widget_set_tooltip_text(btn_test_auto, "test-moles-auto");
    
     GtkWidget *label_vp = gtk_label_new("Vp (V):");
     GtkWidget *entry_vp = gtk_entry_new();
+    gtk_widget_set_tooltip_text(GTK_WIDGET(entry_vp), "entry_vp");
     gtk_entry_set_placeholder_text(GTK_ENTRY(entry_vp), "Ej: 2.35");
    
     GtkWidget *label_vt = gtk_label_new("Vt (mV):");
     GtkWidget *entry_vt = gtk_entry_new();
+    gtk_widget_set_tooltip_text(GTK_WIDGET(entry_vt), "entry_vt");
     gtk_entry_set_placeholder_text(GTK_ENTRY(entry_vt), "Ej: 298.0");
 
    
@@ -44,8 +47,11 @@ int main(int argc, char *argv[]) {
 
     GtkWidget *btn_test_esp = gtk_button_new_with_label("Test Específico");
     g_signal_connect(btn_test_esp, "clicked", G_CALLBACK(on_test_esp_moles_clicked), entries_moles);
+    gtk_widget_set_tooltip_text(btn_test_esp, "test-moles-esp");
+
     GtkWidget *btn_gen = gtk_button_new_with_label("Generar Fichero");
     g_signal_connect(btn_gen, "clicked", G_CALLBACK(on_gen_moles_clicked), entries_moles);
+    gtk_widget_set_tooltip_text(btn_gen, "gen-moles");
    
     gtk_grid_attach(GTK_GRID(grid), label_moles,    0, 0, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), btn_test_auto,  1, 0, 1, 1);
@@ -67,22 +73,27 @@ int main(int argc, char *argv[]) {
    
     GtkWidget *btn_test_auto2 = gtk_button_new_with_label("Test automático");
     g_signal_connect(btn_test_auto2, "clicked", G_CALLBACK(on_test_auto_densidad_clicked), window);
+    gtk_widget_set_tooltip_text(btn_test_auto2, "test-densidad-auto");
    
    
     GtkWidget *label_p = gtk_label_new("P (#):");
     GtkWidget *entry_p = gtk_entry_new();
     gtk_entry_set_placeholder_text(GTK_ENTRY(entry_p), "Ej: 820000");
+    gtk_widget_set_tooltip_text(GTK_WIDGET(entry_p), "entry_p");
    
     GtkWidget *label_vt2 = gtk_label_new("Vt (mV):");
     GtkWidget *entry_vt2 = gtk_entry_new();
     gtk_entry_set_placeholder_text(GTK_ENTRY(entry_vt2), "Ej: 750.0");
-
+    gtk_widget_set_tooltip_text(GTK_WIDGET(entry_vt2), "entry_vt2");
    
     GtkWidget *entries_densidad[2] = {entry_p, entry_vt2};
     GtkWidget *btn_test_esp2 = gtk_button_new_with_label("Test Específico");
     g_signal_connect(btn_test_esp2, "clicked", G_CALLBACK(on_test_esp_densidad_clicked), entries_densidad);
+    gtk_widget_set_tooltip_text(btn_test_esp2, "test-densidad-esp");
+
     GtkWidget *btn_gen2 = gtk_button_new_with_label("Generar Fichero");
     g_signal_connect(btn_gen2, "clicked", G_CALLBACK(on_gen_densidad_clicked), entries_densidad);
+    gtk_widget_set_tooltip_text(btn_gen2, "gen-densidad");
 
     gtk_grid_attach(GTK_GRID(grid), label_densidad,    0, 3, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), btn_test_auto2,  1, 3, 1, 1);
@@ -104,21 +115,26 @@ int main(int argc, char *argv[]) {
    
     GtkWidget *btn_test_auto3 = gtk_button_new_with_label("Test automático");
     g_signal_connect(btn_test_auto3, "clicked", G_CALLBACK(on_test_auto_energia_clicked), window);
+    gtk_widget_set_tooltip_text(btn_test_auto3, "test-energia-auto");
      
     GtkWidget *label_a = gtk_label_new("A (#):");
     GtkWidget *entry_a = gtk_entry_new();
     gtk_entry_set_placeholder_text(GTK_ENTRY(entry_a), "Ej: 256");
+    gtk_widget_set_tooltip_text(GTK_WIDGET(entry_a), "entry_a");
    
     GtkWidget *label_w = gtk_label_new("W (#):");
     GtkWidget *entry_w = gtk_entry_new();
     gtk_entry_set_placeholder_text(GTK_ENTRY(entry_w), "Ej: 8500000");
-
+    gtk_widget_set_tooltip_text(GTK_WIDGET(entry_w), "entry_w");
    
     GtkWidget *entries_energia[2] = {entry_a, entry_w};
     GtkWidget *btn_test_esp3 = gtk_button_new_with_label("Test Específico");
     g_signal_connect(btn_test_esp3, "clicked", G_CALLBACK(on_test_esp_energia_clicked), entries_energia);
+    gtk_widget_set_tooltip_text(btn_test_esp3, "test-energia-esp");
+
     GtkWidget *btn_gen3 = gtk_button_new_with_label("Generar Fichero");
     g_signal_connect(btn_gen3, "clicked", G_CALLBACK(on_gen_energia_clicked), entries_energia);
+    gtk_widget_set_tooltip_text(btn_gen3, "gen-energia");
 
     gtk_grid_attach(GTK_GRID(grid), label_energia,    0, 6, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), btn_test_auto3,  1, 6, 1, 1);
