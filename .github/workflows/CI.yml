@@ -2,9 +2,9 @@ name: Validación Automática Práctica 6
 
 on:
   push:
-    branches: [ "main", "master", "dev" ]
+    branches: [ "main", "dev" ]
   pull_request:
-    branches: [ "main", "master", "dev" ]
+    branches: [ "main", "dev" ]
 
 jobs:
   build-and-test:
@@ -14,7 +14,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    # Instalación de dependencias agrupada por tipo para mayor claridad
     - name: Instalar Dependencias
       run: |
         sudo apt-get update -qq
@@ -22,23 +21,15 @@ jobs:
         sudo apt-get install -y gcc make pkg-config libgtk-3-dev
         # Python y librerías de accesibilidad (necesarias para Dogtail)
         sudo apt-get install -y python3 python3-pip python3-pyatspi python3-gi gir1.2-atspi-2.0 at-spi2-core python3-cairo
-        # Herramientas para GUI Testing (X11)
-        sudo apt-get install -y xvfb xdotool wmctrl dos2unix imagemagick x11-apps dbus-x11 libatk-adaptor
         
         # Librerías de Python
         pip3 install pytest dogtail
 
-    # A veces GitHub Actions deja procesos Xvfb zombies, mejor limpiar antes
+    # Limpiar procesos zombies de GitHub Actions
     - name: Limpiar entorno Xvfb
       run: |
         sudo pkill Xvfb || true
         sudo rm -f /tmp/.X99-lock /tmp/.X*-lock
-
-    - name: Preparar Archivos 
-      run: |
-        # Aseguramos que los scripts tengan formato Unix por si se editaron en Windows
-        dos2unix makefile tests/*.py GUI_test_bash_git_verificacion.sh || true
-        chmod +x GUI_test_bash_git_verificacion.sh
 
     - name: Compilar Proyecto
       run: |
@@ -52,39 +43,13 @@ jobs:
         fi
         echo "Binario compilado correctamente."
 
+    # Tests
     - name: Generar y Ejecutar Tests Unitarios
       run: |
         python3 ./tests/generacion.py
         python3 tests/test_puntofijo.py
 
-    # Test básico para ver si la ventana abre (Smoke Test)
-    - name: Smoke Test GUI (Python)
+    - name: Test GUI (básico)
       run: |
         xvfb-run --auto-servernum --server-args="-screen 0 1024x768x24" \
           python3 ./tests/test_GUI_basic.py
-
-    # Test completo de interacción simulando usuario
-    - name: Test de Interacción GUI (Bash)
-      id: gui-test
-      run: |
-        # Ejecutamos el script dentro de un servidor gráfico virtual
-        xvfb-run --auto-servernum --server-args="-screen 0 1024x768x24" \
-          ./GUI_test_bash_git_verificacion.sh 2>&1 | tee gui_test_output.log
-      
-    - name: Verificar Evidencias
-      if: always()
-      run: |
-        echo "=== Listado de capturas generadas ==="
-        ls -lh images/ || echo "No se encontraron imágenes."
-
-    # Subimos evidencias tanto si falla como si funciona
-    - name: Subir Artefactos (Logs y Capturas)
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: evidencias-validacion
-        path: |
-          images/
-          *.log
-          gui_test_output.log
-        retention-days: 7

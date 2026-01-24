@@ -4,10 +4,7 @@ Este proyecto está organizado en varios directorios, cada uno con una función 
 
 ## Estructura de Directorios
 
-- **.vscode/**
-  Contiene configuraciones específicas del entorno de Visual Studio Code, como ajustes de compilación, extensiones recomendadas o configuraciones del depurador.
-
-- **Document/**
+- **document/**
   Incluye documentación relacionada con la práctica: informes, especificaciones, apuntes o cualquier archivo explicativo necesario para comprender el proyecto y imágenes utilizadas en la documentación.
 
 - **bin/**
@@ -25,13 +22,5 @@ Este proyecto está organizado en varios directorios, cada uno con una función 
 - **tests/**
   Contiene los scripts y archivos necesarios para ejecutar pruebas automáticas del proyecto, como casos de prueba o configuraciones de test.
 
-## Scripts y Archivos de Configuración
-
-- **GUI_test_bash.sh**
-  Script en bash para ejecutar pruebas o automatizar tareas relacionadas con la interfaz gráfica o el entorno de test.
-
-- **generacion_de_testeo.py**
-  Script en Python encargado de generar casos de prueba o automatizar procesos de validación.
-
 - **makefile**
-  Archivo que define reglas de compilación, limpieza y ejecución del proyecto mediante el comando `make`.
+  Archivo para compilación, limpieza y ejecución del proyecto mediante el comando `make`.
