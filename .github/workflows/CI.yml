@@ -2,149 +2,89 @@ name: Validación Automática Práctica 6
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "main", "master", "dev" ]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: [ "main", "master", "dev" ]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-22.04
     timeout-minutes: 15
 
-    defaults:
-      run:
-        working-directory: ./Practica6
-
     steps:
     - uses: actions/checkout@v3
 
+    # Instalación de dependencias agrupada por tipo para mayor claridad
     - name: Instalar Dependencias
       run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          gcc make pkg-config \
-          libgtk-3-dev \
-          python3 python3-pip \
-          xvfb xdotool wmctrl dos2unix \
-          imagemagick x11-apps
-        pip3 install pytest
+        sudo apt-get update -qq
+        # Herramientas de compilación y GTK
+        sudo apt-get install -y gcc make pkg-config libgtk-3-dev
+        # Python y librerías de accesibilidad (necesarias para Dogtail)
+        sudo apt-get install -y python3 python3-pip python3-pyatspi python3-gi gir1.2-atspi-2.0 at-spi2-core python3-cairo
+        # Herramientas para GUI Testing (X11)
+        sudo apt-get install -y xvfb xdotool wmctrl dos2unix imagemagick x11-apps dbus-x11 libatk-adaptor
+        
+        # Librerías de Python
+        pip3 install pytest dogtail
 
-    - name: Limpiar posibles locks de Xvfb
+    # A veces GitHub Actions deja procesos Xvfb zombies, mejor limpiar antes
+    - name: Limpiar entorno Xvfb
       run: |
-        # Limpiar locks de displays anteriores
-        sudo rm -f /tmp/.X99-lock
-        sudo rm -f /tmp/.X0-lock
+        sudo pkill Xvfb || true
+        sudo rm -f /tmp/.X99-lock /tmp/.X*-lock
 
-    - name: Reparar Makefile
-      run: dos2unix makefile
+    - name: Preparar Archivos 
+      run: |
+        # Aseguramos que los scripts tengan formato Unix por si se editaron en Windows
+        dos2unix makefile tests/*.py GUI_test_bash_git_verificacion.sh || true
+        chmod +x GUI_test_bash_git_verificacion.sh
 
     - name: Compilar Proyecto
       run: |
         make clean
-        make all 2>&1 | tee make.log || {
-          echo "✗ Error en compilación";
-          cat make.log;
-          exit 1;
-        }
-
-    - name: Verificar binario
-      run: |
-        if [ -f "./bin/calculo_punto_fijo" ]; then
-          echo "✓ Binario compilado correctamente"
-          file ./bin/calculo_punto_fijo
-        else
-          echo "✗ ERROR: No se encontró el binario"
-          ls -la bin/
+        make all 2>&1 | tee make.log
+        
+        # Verificación rápida del binario
+        if [ ! -f "./bin/calculo_punto_fijo" ]; then
+          echo "Error: No se generó el binario."
           exit 1
         fi
+        echo "Binario compilado correctamente."
 
-    - name: Generar Casos de Test
+    - name: Generar y Ejecutar Tests Unitarios
       run: |
-        mkdir -p tests/data
-        python3 generacion_de_testeo.py
+        python3 ./tests/generacion.py
+        python3 tests/test_puntofijo.py
 
-    - name: Ejecutar Pytest
-      run: |
-        pytest tests/python/pytest_cap3.py -v
-
+    # Test básico para ver si la ventana abre (Smoke Test)
     - name: Smoke Test GUI (Python)
       run: |
-        cd tests/python
-        # Usar display diferente para evitar conflictos
-        xvfb-run --server-args="-screen 0 1024x768x24" python3 GUI_test.py
+        xvfb-run --auto-servernum --server-args="-screen 0 1024x768x24" \
+          python3 ./tests/test_GUI_basic.py
 
-    - name: Test de Interacción GUI
+    # Test completo de interacción simulando usuario
+    - name: Test de Interacción GUI (Bash)
       id: gui-test
       run: |
-        # Usar xvfb-run que maneja automáticamente el servidor
-        echo "Preparando script de prueba GUI..."
-        chmod +x GUI_test_bash_git_verificacion.sh
-        dos2unix GUI_test_bash_git_verificacion.sh
-        
-        echo "=== Ejecutando prueba GUI ==="
-        # xvfb-run maneja automáticamente el servidor Xvfb
+        # Ejecutamos el script dentro de un servidor gráfico virtual
         xvfb-run --auto-servernum --server-args="-screen 0 1024x768x24" \
           ./GUI_test_bash_git_verificacion.sh 2>&1 | tee gui_test_output.log
-        
-        EXIT_CODE=${PIPESTATUS[0]}
-        
-        # Mostrar información de depuración
-        echo "=== Información de depuración ==="
-        echo "Código de salida del test GUI: $EXIT_CODE"
-        echo "Contenido de la carpeta actual:"
-        ls -la
-        
-        # Verificar si se crearon capturas
-        if [ -d "images" ]; then
-          echo "Capturas generadas:"
-          ls -la images/ || echo "No se pueden listar capturas"
-          echo "Número de capturas PNG:"
-          find images/ -name "*.png" | wc -l
-        else
-          echo "✗ No se creó la carpeta images"
-        fi
-        
-        # Evaluar resultado
-        if [ $EXIT_CODE -eq 0 ]; then
-          echo "✓ Test GUI completado exitosamente"
-        elif [ $EXIT_CODE -eq 2 ]; then
-          echo "⚠ Test GUI completado con advertencias"
-        else
-          echo "✗ Test GUI falló con código $EXIT_CODE"
-          echo "Últimas 50 líneas del log:"
-          tail -50 gui_test_output.log
-          exit $EXIT_CODE
-        fi
-
-    - name: Verificar evidencias generadas
+      
+    - name: Verificar Evidencias
       if: always()
       run: |
-        echo "=== Verificación de evidencias ==="
-        if [ -d "images" ]; then
-          echo "Contenido de images/:"
-          ls -la images/
-          echo "Archivos PNG encontrados:"
-          find images/ -name "*.png" -exec echo "  - {}" \;
-        else
-          echo "✗ No se encontró la carpeta images"
-        fi
+        echo "=== Listado de capturas generadas ==="
+        ls -lh images/ || echo "No se encontraron imágenes."
 
-    - name: Guardar Evidencias (Screenshots)
+    # Subimos evidencias tanto si falla como si funciona
+    - name: Subir Artefactos (Logs y Capturas)
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: capturas-gui
+        name: evidencias-validacion
         path: |
-          Practica6/images/
-          Practica6/gui_test_output.log
+          images/
+          *.log
+          gui_test_output.log
         retention-days: 7
-
-    - name: Guardar logs de compilación
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: logs-error
-        path: |
-          Practica6/make.log
-          Practica6/gui_test_output.log
-        retention-days: 30
