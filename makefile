@@ -46,7 +46,8 @@ generate-test-data:
 
 # Tests de capas
 test_capa1: $(BUILD)/libpuntofijo.so
-	python ./tests/GUI_basic.py
+	python3 ./tests/test_GUI_basic.py
+	pytest ./tests/test_GUI_dogtail.py
 
 test_capa2: $(BUILD)/libpuntofijo.so
 	pytest ./tests/pytest_cap2.py

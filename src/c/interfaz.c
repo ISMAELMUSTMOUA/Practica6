@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
 
     GtkWidget *btn_gen3 = gtk_button_new_with_label("Generar Fichero");
     g_signal_connect(btn_gen3, "clicked", G_CALLBACK(on_gen_energia_clicked), entries_energia);
-    gtk_widget_set_tooltip_text(btn_gen3, "gen-energia");
+    gtk_widget_set_tooltip_text(btn_gen3, "gen-energ");
 
     gtk_grid_attach(GTK_GRID(grid), label_energia,    0, 6, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), btn_test_auto3,  1, 6, 1, 1);

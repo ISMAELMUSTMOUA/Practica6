@@ -368,6 +368,7 @@ void on_gen_moles_clicked(GtkWidget *widget, gpointer data) {
 
     GtkWidget *label_vp = gtk_label_new("Vp (V):");
     vp_entry_moles = gtk_entry_new();
+    gtk_widget_set_tooltip_text(GTK_WIDGET(vp_entry_moles), "entry_vp_moles");
     vp_moles = vp_entry_moles;
     gtk_box_pack_start(GTK_BOX(vbox), label_vp, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), vp_entry_moles, FALSE, FALSE, 0);
@@ -375,7 +376,9 @@ void on_gen_moles_clicked(GtkWidget *widget, gpointer data) {
 
     GtkWidget *label_vt = gtk_label_new("Vt (mV):");
     vt_entry_moles = gtk_entry_new();
+    gtk_widget_set_tooltip_text(GTK_WIDGET(vt_entry_moles), "entry_vt_moles");
     vt_moles= vt_entry_moles;
+
     gtk_box_pack_start(GTK_BOX(vbox), label_vt, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), vt_entry_moles, FALSE, FALSE, 0);
 
@@ -492,6 +495,7 @@ void on_gen_densidad_clicked(GtkWidget *widget, gpointer data) {
 
     GtkWidget *label_p = gtk_label_new("P (#):");
     p_entry_densidad = gtk_entry_new();
+    gtk_widget_set_tooltip_text(GTK_WIDGET(p_entry_densidad), "entry_p_densidad");
     p_densidad = p_entry_densidad;
     gtk_box_pack_start(GTK_BOX(vbox), label_p, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), p_entry_densidad, FALSE, FALSE, 0);
@@ -499,6 +503,7 @@ void on_gen_densidad_clicked(GtkWidget *widget, gpointer data) {
 
     GtkWidget *label_vt = gtk_label_new("Vt (mV):");
     vt_entry_densidad = gtk_entry_new();
+    gtk_widget_set_tooltip_text(GTK_WIDGET(vt_entry_densidad), "entry_vt_densidad");
     vt_densidad= vt_entry_densidad;
     gtk_box_pack_start(GTK_BOX(vbox), label_vt, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), vt_entry_densidad, FALSE, FALSE, 0);
@@ -617,6 +622,7 @@ void on_gen_energia_clicked(GtkWidget *widget, gpointer data) {
 
     GtkWidget *label_a = gtk_label_new("A (#):");
     a_entry_energia = gtk_entry_new();
+    gtk_widget_set_tooltip_text(GTK_WIDGET(a_entry_energia), "entry_a_energia");
     a_energia = a_entry_energia;
     gtk_box_pack_start(GTK_BOX(vbox), label_a, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), a_entry_energia, FALSE, FALSE, 0);
@@ -624,6 +630,7 @@ void on_gen_energia_clicked(GtkWidget *widget, gpointer data) {
 
     GtkWidget *label_w = gtk_label_new("W (#):");
     w_entry_energia = gtk_entry_new();
+    gtk_widget_set_tooltip_text(GTK_WIDGET(w_entry_energia), "entry_w_energia");
     w_energia= w_entry_energia;
     gtk_box_pack_start(GTK_BOX(vbox), label_w, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), w_entry_energia, FALSE, FALSE, 0);
