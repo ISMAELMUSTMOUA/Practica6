@@ -8,6 +8,10 @@ if ! command -v wmctrl &> /dev/null; then
     echo "Instalando wmctrl..."
     sudo apt-get install -y wmctrl
 fi
+if ! command -v xdotool &> /dev/null; then
+    echo "Instalando xdotool..."
+    sudo apt-get install -y xdotool
+fi
 
 # 2. si hace falta activada el robo de foco en Cinnamon
 if gsettings list-schemas | grep -q "org.cinnamon.desktop.wm.preferences"; then
