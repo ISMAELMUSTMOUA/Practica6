@@ -59,8 +59,8 @@ La estrategia de testeo bottom-up consiste en verificar inicialmente los módulo
 
 
 - **Otras técnicas (Tests a nivel de sistema):**
-  - **Prueba de arranque:** Implementado en `GUI_test.py`. Verifica simplemente que la aplicación es capaz de arrancar, mantenerse en ejecución durante unos segundos y cerrarse limpiamente sin errores de memoria (Segmentation Fault).
-  - **Test de interacción automático:** Implementado en `GUI_test_bash.sh`. Simula un usuario real interactuando con la ventana mediante teclado y ratón.
+  - **Prueba de arranque:** Implementado en `test_GUI_basic.py`. Verifica simplemente que la aplicación es capaz de arrancar, mantenerse en ejecución durante unos segundos y cerrarse sin errores.
+  - **Test de interacción automático:** Implementado en `test_GUI_dogtail.py`. Se trata de un test con mayor profundidad que el anterior. Simula un usuario real interactuando con la ventana mediante teclado y ratón.
 
 ---
 
@@ -94,29 +94,33 @@ Referente al desarrollo del script `test_puntofijo.py` destacar que en un primer
 
 
 ### Tests de la capa intermedia (funciones de interfaz)
+La capa intermedia (`gestion.c`) se ha creado con el objetivo de mejorar la estructura de la práctica 2.10. En esta capa se han integrado los callbacks de las funciones llamadas desde los elementos de la interfaz. Esta capa no ha podido ser verificada de forma directa e independiente. El motivo de esto es su fuerte dependencia de la librería de GTK a pesar de la reestructuración, que hace imposible generar funciones independientes a los widgets de GTK. 
+- La generación de los ficheros se realiza de forma progresiva desde una ventana emergente diferente a la interfaz principal y también presenta botones y campos para rellenar.
+- El test automático también lanza una ventana emergente que selecciona un fichero para pasárselo a las funciones de test automático de puntofijo.c.
 
-| Test | Entrada | Salida esperada | Tolerancia |
-|------|---------|-----------------|------------|
-| Validación Moles | Texto "10.0" en Vp | Mensaje de error / No cálculo | N/A |
-| Validación Densidad | Texto vacío "" | No actualización de resultado | N/A |
-| Parseo de Archivo | Fichero .txt generado | Lectura correcta de líneas | Exacta |
+Por esto mismo, dichas funciones no han podido ser probadas de forma independiente a la interfaz. No obstante, no han dejado de ser verificadas, ya que se ha invertido más dedicación en realizar un test de integración completo, en el que se verifica el correcto funcionamiento de estas funciones.
 
 *Descripción de los tests:*
-La capa de gestión (`gestion.c`) se verifica implícitamente a través de los tests de integración. Se valida que los datos introducidos en la GUI se convierten correctamente (`atof`) y se pasan a la capa base solo si cumplen los requisitos de rango (lógica de validación en `gestion.c` antes de llamar a `calc_*`).
+La capa intermedia se verifica implícitamente a través de los tests de integración. Se valida que los datos introducidos en la GUI se convierten correctamente y se pasan a la capa base. Se verifica también la correcta generación de los ficheros de las funciones correspondientes.
 
 ### Tests de integración / GUI
+Como se ha comentado en la documentación proporcionada para la práctica, los tests de GUI resultan más complejos de implementar. Inicialmente se ha implementado un test básico pero posteriormente, ante la falta de un test para la capa intermedia, se ha decidido profundizar en la verificación de la interfaz.
 
+*Descripción de los tests:*
 Se han desarrollado dos scripts complementarios para asegurar la robustez de la GUI:
 
-1.  **Smoke Test (`test_GUI_basic.py`):**
-    Script en Python que utiliza la librería `subprocess`. Lanza el ejecutable `./calculo_punto_fijo` en segundo plano, espera 3 segundos para asegurar que la inicialización de GTK es correcta y verifica que el proceso sigue vivo (`poll() is None`). Finalmente, cierra la aplicación de forma controlada.
+1.  **Test básico (`test_GUI_basic.py`):**
+    Este programa de Python utiliza la librería `subprocess` para lanza el ejecutable `./calculo_punto_fijo` en segundo plano, espera 3 segundos para asegurar que la inicialización de GTK es correcta y verifica que el proceso sigue vivo. Finalmente, cierra la aplicación de forma controlada. Esto permite asegurar que la interfaz es estable.
 
-2.  **End-to-End Test (`GUI_test_bash.sh`):**
-    Script en Bash para prueba funcional completa:
-    * **Lanzamiento:** Compila y ejecuta la aplicación.
-    * **Detección:** Usa `wmctrl` para encontrar el ID de la ventana de GTK, asegurando que el entorno gráfico (X11) ha renderizado la ventana.
-    * **Interacción:** Usa `xdotool` para enviar pulsaciones de teclas (`Tab`, `Enter`) y escribir valores en los campos de texto de las tres pestañas (Moles, Densidad, Energía).
-    * **Verificación:** Comprueba visualmente y por consola que la aplicación responde a los eventos y realiza los cálculos.
+2.  **Test avanzado(`test_GUI_dogtail.py`):**
+    Este programa realiza un test de la interfaz más exhaustivo que el anterior. Simula la interacción de un usuario con la interfaz, que pulsa botones, introduce datos en las entry y navega para seleccionar ficheros para los tests. Además de la librería `subprocess`, también emplea la librería `dogtail`, que permite explorar los distintos elementos de una ventana (la interfaz y sus 'hijos') y simular la interacción con ellos. 
+    
+    También se ha empleado la herramienta `Accerciser` para explorar los nodos de la interfaz y saber las características por las cuales los podía encontrar dogtail (nombre y descripción, principalmente) y las acciones que se podía realizar con ellos.
+
+    Se han implementado tres tipos de test: 
+    - Verificación de las funciones de tests específicos, que toman como datos de entrada los generados para la capa 3 y los introduce en las entrys correspondientes un número determinado de veces.
+    - Verificación de las funciones de test automáticos, que navegan automáticamente por el explorador de archivos y seleccionan los ficheros de ejemplo generados para la práctica 2.10.
+    - Verificación de las funciones de generación de ficheros, que navegan dentro de la ventana emergente, introducen datos para generar el archivo, lo guardan y cierran. Finalmente se verifica que ha sido creado correctamente.
 
 ---
 
@@ -191,7 +195,7 @@ Finalmente, concluiremos este informe destacando los siguientes aspectos:
 `Cobertura funcional:`
 
 - Se ha verificado cada capa independientemente en distintos escenarios y un gran cantidad de casos de test.
-- Se han empleado scripts y herramientas específicas (pytest...).
+- Se han empleado scripts y herramientas específicas (pytest y asserts).
 
 ### Lecciones aprendidas
 

@@ -49,9 +49,6 @@ test_capa1: $(BUILD)/libpuntofijo.so
 	python3 ./tests/test_GUI_basic.py
 	pytest ./tests/test_GUI_dogtail.py
 
-test_capa2: $(BUILD)/libpuntofijo.so
-	pytest ./tests/pytest_cap2.py
-
 test_capa3: $(BUILD)/libpuntofijo.so
 	python3 ./tests/test_puntofijo.py
 	
@@ -72,4 +69,4 @@ run: $(BIN)/$(EXE)
 clean:
 	rm -rf $(BIN) $(BUILD) $(test_data) $(REPORTS) *.gcda *.gcno *.gcov coverage.info coverage_report
 
-.PHONY: all create-dirs generate-test-data test_capa1 test_capa2 test_capa3 coverage run clean
+.PHONY: all create-dirs generate-test-data test_capa1 test_capa3 coverage run clean
