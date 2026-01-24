@@ -156,10 +156,11 @@ Como se puede comprobar la mayoría de los casos pasan los test y pero hay casos
 **(Captura de pantalla de la ejecución: `./test_GUI_basic.py`)**
 
 ![Captura GUI Test](captura_gui_py.png)
-### Resumen de resultados
 
 Como se observa en las capturas, la verificación de la interfaz gráfica se ha realizado mediante una estrategia de *Caja Blanca*. Esta metodología permite comprobar de forma directa el funcionamiento interno de la aplicación, evaluando tanto la respuesta a las acciones del usuario (como clics y navegación) como el comportamiento general de la interfaz.
 El script `GUI_test_bash.sh` valida la interacción básica con los elementos gráficos, mientras que el archivo `test_GUI_basic.py` en Python se encarga de abrir la interfaz y detectar posibles errores o fallos durante su inicialización.
+
+### Resumen de resultados
 
 
 | Capa | Tests ejecutados | Tests pasados | Tests fallidos |
