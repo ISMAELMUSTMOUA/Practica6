@@ -26,7 +26,7 @@ jobs:
           python3-cairo \
           gnome-session gnome-settings-daemon dbus-x11 \
           libatk-adaptor \
-          x11-utils  # ← IMPORTANTE: Para xwininfo, xdpyinfo, etc.
+          x11-utils  
         pip3 install pytest dogtail 
 
     - name: Limpiar Xvfb
@@ -82,74 +82,42 @@ jobs:
 
     - name: Test GUI With Dogtail (Python)
       run: |
-        echo "=== CONFIGURACIÓN SIMPLIFICADA PARA DOGTAIL ==="
+        echo "=== CONFIGURACIÓN CORRECTA PARA DOGTAIL ==="
         
-        # Variables críticas que Dogtail necesita
-        export NO_AT_BRIDGE=1
+        export NO_AT_BRIDGE=0
         export GNOME_ACCESSIBILITY=1
         
-        echo "1. Verificando que la aplicación tiene soporte de accesibilidad..."
-        # Verificar si la aplicación GTK fue compilada con soporte de accesibilidad
-        ldd ./bin/calculo_punto_fijo | grep -i atk || echo "⚠️  ATK no encontrado en dependencias"
+        # Verificar que AT-SPI está instalado
+        echo "1. Verificando AT-SPI..."
+        dpkg -l | grep -E "(at-spi|atk)" || echo "AT-SPI instalado"
         
-        echo "2. Ejecutando tests Dogtail con tiempo extendido..."
-        # Ejecutar con timeout largo y sin configuración compleja
-        timeout 180 xvfb-run --auto-servernum --server-args="-screen 0 1024x768x24 -ac" \
-          python3 -c "
-        import subprocess
-        import time
-        import os
-        import sys
+        # Iniciar el servicio AT-SPI
+        echo "2. Iniciando servicios AT-SPI..."
+        /usr/lib/at-spi2-core/at-spi-bus-launcher --launch-immediately &
+        sleep 3
         
-        # Configurar entorno para Dogtail
-        os.environ['NO_AT_BRIDGE'] = '1'
-        os.environ['GNOME_ACCESSIBILITY'] = '1'
+        # Configurar accesibilidad de GNOME (esto es lo que pide el error)
+        echo "3. Configurando accesibilidad GNOME..."
+        # Necesitamos DBus y una sesión GNOME simulada
+        eval $(dbus-launch --sh-syntax)
+        gsettings set org.gnome.desktop.interface toolkit-accessibility true 2>/dev/null || echo "gsettings no disponible, continuando..."
         
-        print('=== INICIANDO TEST DOGTAIL ===')
-        print('Variables de entorno configuradas')
-        
-        # Iniciar la aplicación
-        print('Iniciando aplicación...')
-        app_proc = subprocess.Popen(['./bin/calculo_punto_fijo'])
-        time.sleep(10)  # Esperar MUCHO tiempo para que inicie completamente
-        
-        # Importar Dogtail DESPUÉS de iniciar la aplicación
-        from dogtail.tree import root
-        
-        print('Buscando aplicación...')
-        # Intentar encontrar la aplicación
-        for i in range(10):
-            try:
-                apps = root.applications()
-                print(f'Aplicaciones disponibles: {[app.name for app in apps]}')
-                
-                # Buscar por diferentes nombres posibles
-                for app in apps:
-                    if 'calculo' in app.name.lower() or 'punto' in app.name.lower():
-                        print(f'✓ Aplicación encontrada: {app.name}')
-                        # Aquí irían tus tests...
-                        print('¡Tests Dogtail listos para ejecutar!')
-                        app_proc.terminate()
-                        sys.exit(0)
-            except Exception as e:
-                print(f'Intento {i+1}: Error - {e}')
-                time.sleep(3)
-        
-        print('✗ No se pudo encontrar la aplicación')
-        app_proc.terminate()
-        sys.exit(1)
-        " 2>&1 | tee dogtail.log
-        
-        # Verificar resultado
-        if [ ${PIPESTATUS[0]} -eq 0 ]; then
-          echo "✅ Tests Dogtail ejecutados exitosamente"
-        else
-          echo "⚠️  Tests Dogtail no pudieron ejecutarse completamente"
-          echo "=== ÚLTIMAS LÍNEAS DEL LOG ==="
-          tail -30 dogtail.log
-          echo "CONTINUANDO CON OTROS TESTS..."
-        fi
-        
+        echo "4. Ejecutando tests Dogtail..."
+        # Ejecutar con DISPLAY explícito
+        DISPLAY=:99 xvfb-run --auto-servernum --server-args="-screen 0 1024x768x24" \
+          bash -c "
+            # Dentro del entorno Xvfb
+            export NO_AT_BRIDGE=0
+            export GNOME_ACCESSIBILITY=1
+            
+            # Ejecutar AT-SPI registry
+            /usr/lib/at-spi2-core/at-spi2-registryd &
+            sleep 2
+            
+            # Ejecutar el test
+            python3 ./tests/test_GUI_dogtail.py
+          " 2>&1 | tee dogtail.log    
+          
     - name: Test de Interacción GUI (bash)
       id: gui-test
       run: |
@@ -182,7 +150,7 @@ jobs:
           echo "=== CAPTURAS DISPONIBLES ==="
           ls -la images/
         else
-          echo "⚠️  No se encontró la carpeta images"
+          echo "No se encontró la carpeta images"
         fi
 
     - name: Guardar Evidencias (Screenshots)
