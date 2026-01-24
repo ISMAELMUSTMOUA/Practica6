@@ -153,11 +153,11 @@ Como se puede comprobar la mayoría de los casos pasan los test y pero hay casos
 
 **(Captura de pantalla de la ejecución: `./GUI_test_bash.sh`)**
 
-![Captura GUI Test](../images/captura_gui.png)
+![Captura GUI Test](captura_gui.png)
 
 **(Captura de pantalla de la ejecución: `./GUI_test.py`)**
 
-![Captura GUI Test](../images/captura_gui_py.png)
+![Captura GUI Test](captura_gui_py.png)
 ### Resumen de resultados
 
 | Capa | Tests ejecutados | Tests pasados | Tests fallidos |
