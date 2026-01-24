@@ -82,42 +82,35 @@ jobs:
 
     - name: Test GUI With Dogtail (Python)
       run: |
-        echo "=== CONFIGURACIÓN CORRECTA PARA DOGTAIL ==="
-        
-        export NO_AT_BRIDGE=0
-        export GNOME_ACCESSIBILITY=1
-        
-        # Verificar que AT-SPI está instalado
-        echo "1. Verificando AT-SPI..."
-        dpkg -l | grep -E "(at-spi|atk)" || echo "AT-SPI instalado"
-        
-        # Iniciar el servicio AT-SPI
-        echo "2. Iniciando servicios AT-SPI..."
-        /usr/lib/at-spi2-core/at-spi-bus-launcher --launch-immediately &
-        sleep 3
-        
-        # Configurar accesibilidad de GNOME (esto es lo que pide el error)
-        echo "3. Configurando accesibilidad GNOME..."
-        # Necesitamos DBus y una sesión GNOME simulada
-        eval $(dbus-launch --sh-syntax)
-        gsettings set org.gnome.desktop.interface toolkit-accessibility true 2>/dev/null || echo "gsettings no disponible, continuando..."
-        
-        echo "4. Ejecutando tests Dogtail..."
-        # Ejecutar con DISPLAY explícito
-        DISPLAY=:99 xvfb-run --auto-servernum --server-args="-screen 0 1024x768x24" \
+        echo "=== DOGTAIL EN ENTORNO CORRECTO ==="
+    
+        xvfb-run --auto-servernum --server-args="-screen 0 1024x768x24" \
           bash -c "
-            # Dentro del entorno Xvfb
+            set -e
+    
             export NO_AT_BRIDGE=0
             export GNOME_ACCESSIBILITY=1
-            
-            # Ejecutar AT-SPI registry
-            /usr/lib/at-spi2-core/at-spi2-registryd &
+            export GTK_MODULES=gail:atk-bridge
+    
+            echo '1. Iniciando DBus'
+            eval \$(dbus-launch --sh-syntax)
+    
+            echo '2. Lanzando AT-SPI'
+            /usr/libexec/at-spi-bus-launcher --launch-immediately &
             sleep 2
-            
-            # Ejecutar el test
+    
+            echo '3. Verificando registro AT-SPI'
+            ps aux | grep at-spi || true
+    
+            echo '4. Lanzando aplicación bajo test'
+            ./bin/calculo_punto_fijo &
+            sleep 2
+    
+            echo '5. Ejecutando Dogtail'
             python3 ./tests/test_GUI_dogtail.py
-          " 2>&1 | tee dogtail.log    
-          
+          " 2>&1 | tee dogtail.log
+    
+              
     - name: Test de Interacción GUI (bash)
       id: gui-test
       run: |
