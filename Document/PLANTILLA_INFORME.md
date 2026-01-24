@@ -108,7 +108,7 @@ La capa de gestión (`gestion.c`) se verifica implícitamente a través de los t
 
 Se han desarrollado dos scripts complementarios para asegurar la robustez de la GUI:
 
-1.  **Smoke Test (`GUI_test.py`):**
+1.  **Smoke Test (`test_GUI_basic.py`):**
     Script en Python que utiliza la librería `subprocess`. Lanza el ejecutable `./calculo_punto_fijo` en segundo plano, espera 3 segundos para asegurar que la inicialización de GTK es correcta y verifica que el proceso sigue vivo (`poll() is None`). Finalmente, cierra la aplicación de forma controlada.
 
 2.  **End-to-End Test (`GUI_test_bash.sh`):**
@@ -148,8 +148,6 @@ Una vez termina este report se llama a pytest y se realiza la comprobación más
 
 Como se puede comprobar la mayoría de los casos pasan los test y pero hay casos que no, algunos debido a que son valores se encuentran fuera de los límites descritos, otros porque son casos especiales (que realmente no deben pasar los test) y otros que sí deberían pasarlos pero que no los pasan por imprecisiones en el desarrollo de `puntofijo.c` o de los rangos de las entradas de `moles, densidad y energía cinética`.
 
-Como se observa en las capturas, la verificación de la interfaz gráfica se ha realizado mediante una estrategia de *Caja Blanca*. Esta metodología permite comprobar de forma directa el funcionamiento interno de la aplicación, evaluando tanto la respuesta a las acciones del usuario (como clics y navegación) como el comportamiento general de la interfaz.
-El script `GUI_test_bash.sh` valida la interacción básica con los elementos gráficos, mientras que el archivo `test_GUI_basic.py` en Python se encarga de abrir la interfaz y detectar posibles errores o fallos durante su inicialización.
 
 **(Captura de pantalla de la ejecución: `./GUI_test_bash.sh`)**
 
@@ -159,6 +157,10 @@ El script `GUI_test_bash.sh` valida la interacción básica con los elementos gr
 
 ![Captura GUI Test](captura_gui_py.png)
 ### Resumen de resultados
+
+Como se observa en las capturas, la verificación de la interfaz gráfica se ha realizado mediante una estrategia de *Caja Blanca*. Esta metodología permite comprobar de forma directa el funcionamiento interno de la aplicación, evaluando tanto la respuesta a las acciones del usuario (como clics y navegación) como el comportamiento general de la interfaz.
+El script `GUI_test_bash.sh` valida la interacción básica con los elementos gráficos, mientras que el archivo `test_GUI_basic.py` en Python se encarga de abrir la interfaz y detectar posibles errores o fallos durante su inicialización.
+
 
 | Capa | Tests ejecutados | Tests pasados | Tests fallidos |
 |------|------------------|---------------|----------------|
