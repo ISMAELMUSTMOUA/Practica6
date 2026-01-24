@@ -9,6 +9,21 @@ if ! command -v wmctrl &> /dev/null; then
     sudo apt-get install -y wmctrl
 fi
 
+# 2. si hace falta activada el robo de foco en Cinnamon
+if gsettings list-schemas | grep -q "org.cinnamon.desktop.wm.preferences"; then
+    FOCUS_LEVEL=$(gsettings get org.cinnamon.desktop.wm.preferences focus-stealing-prevention-level)
+    
+    if [ "$FOCUS_LEVEL" != "0" ]; then
+        echo "Activando permiso para que las ventanas roben el foco"
+        gsettings set org.cinnamon.desktop.wm.preferences focus-stealing-prevention-level 0
+    else
+        echo "El foco ya está permitido en Cinnamon."
+    fi
+else
+    echo "No estás en Cinnamon. Se omite la configuración del foco."
+fi
+
+
 # git para validar el .yml
 # Iniciar aplicación
 ./bin/calculo_punto_fijo &
