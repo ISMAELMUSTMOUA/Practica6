@@ -8,16 +8,13 @@ Este proyecto está organizado en varios directorios, cada uno con una función 
   Contiene configuraciones específicas del entorno de Visual Studio Code, como ajustes de compilación, extensiones recomendadas o configuraciones del depurador.
 
 - **Document/**
-  Incluye documentación relacionada con la práctica: informes, especificaciones, apuntes o cualquier archivo explicativo necesario para comprender el proyecto.
+  Incluye documentación relacionada con la práctica: informes, especificaciones, apuntes o cualquier archivo explicativo necesario para comprender el proyecto y imágenes utilizadas en la documentación.
 
 - **bin/**
   Directorio donde se almacenan los ejecutables generados tras la compilación del proyecto.
 
 - **build/**
   Carpeta utilizada para almacenar archivos intermedios de compilación, como objetos (`.o`) o dependencias generadas por el compilador.
-
-- **images/**
-  Contiene imágenes utilizadas en la documentación o en el README, como capturas de pantalla, diagramas o gráficos.
 
 - **include/**
   Almacena los archivos de cabecera (`.h`) del proyecto. Aquí se definen funciones, estructuras, constantes y prototipos utilizados en el código fuente.
