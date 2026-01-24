@@ -148,14 +148,14 @@ Una vez termina este report se llama a pytest y se realiza la comprobación más
 
 Como se puede comprobar la mayoría de los casos pasan los test y pero hay casos que no, algunos debido a que son valores se encuentran fuera de los límites descritos, otros porque son casos especiales (que realmente no deben pasar los test) y otros que sí deberían pasarlos pero que no los pasan por imprecisiones en el desarrollo de `puntofijo.c` o de los rangos de las entradas de `moles, densidad y energía cinética`.
 
-
-
+Como se observa en las capturas, la verificación de la interfaz gráfica se ha realizado mediante una estrategia de *Caja Blanca*. Esta metodología permite comprobar de forma directa el funcionamiento interno de la aplicación, evaluando tanto la respuesta a las acciones del usuario (como clics y navegación) como el comportamiento general de la interfaz.
+El script `GUI_test_bash.sh` valida la interacción básica con los elementos gráficos, mientras que el archivo `test_GUI_basic.py` en Python se encarga de abrir la interfaz y detectar posibles errores o fallos durante su inicialización.
 
 **(Captura de pantalla de la ejecución: `./GUI_test_bash.sh`)**
 
 ![Captura GUI Test](captura_gui.png)
 
-**(Captura de pantalla de la ejecución: `./GUI_test.py`)**
+**(Captura de pantalla de la ejecución: `./test_GUI_basic.py`)**
 
 ![Captura GUI Test](captura_gui_py.png)
 ### Resumen de resultados
