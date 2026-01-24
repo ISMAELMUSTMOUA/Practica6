@@ -80,35 +80,48 @@ jobs:
         sudo dbus-uuidgen --ensure=/var/lib/dbus/machine-id 2>/dev/null || true
         echo "✓ DBus configurado"
 
+    - name: Preparar entorno Dogtail
+      run: |
+        sudo pkill Xvfb || true
+        sudo rm -f /tmp/.X99-lock
+        sudo rm -f /tmp/.X*-lock
+        
+        # Configurar DBus machine ID (necesario para GNOME)
+        sudo mkdir -p /var/lib/dbus
+        sudo dbus-uuidgen --ensure=/var/lib/dbus/machine-id
+        
+        # Iniciar DBus session
+        export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/var/run/dbus/system_bus_socket
+        sudo service dbus start
+        sleep 2
+
     - name: Test GUI With Dogtail (Python)
       run: |
-        echo "=== DOGTAIL EN ENTORNO CORRECTO ==="
-    
-        xvfb-run --auto-servernum --server-args="-screen 0 1024x768x24" \
-          bash -c "
-            set -e
-    
-            export NO_AT_BRIDGE=0
-            export GNOME_ACCESSIBILITY=1
-            export GTK_MODULES=gail:atk-bridge
-    
-            echo '1. Iniciando DBus'
-            eval \$(dbus-launch --sh-syntax)
-    
-            echo '2. Lanzando AT-SPI'
-            /usr/libexec/at-spi-bus-launcher --launch-immediately &
-            sleep 2
-    
-            echo '3. Verificando registro AT-SPI'
-            ps aux | grep at-spi || true
-    
-            echo '4. Lanzando aplicación bajo test'
-            ./bin/calculo_punto_fijo &
-            sleep 2
-    
-            echo '5. Ejecutando Dogtail'
-            python3 ./tests/test_GUI_dogtail.py
-          " 2>&1 | tee dogtail.log
+        export DISPLAY=:99
+        
+        # Iniciar Xvfb en segundo plano
+        Xvfb :99 -screen 0 1024x768x24 -ac -nolisten tcp &
+        XVFB_PID=$!
+        sleep 3
+        
+
+        export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus"
+
+        timeout 10s dbus-launch --sh-syntax > /tmp/dbus-env
+        if [ -f /tmp/dbus-env ]; then
+          source /tmp/dbus-env
+          gsettings set org.gnome.desktop.interface toolkit-accessibility true 2>/dev/null || echo "gsettings no disponible, continuando..."
+        fi
+        
+        export GNOME_ACCESSIBILITY=1
+        export NO_AT_BRIDGE=1  
+        
+        # Ejecutar test Dogtail
+        echo "Ejecutando tests Dogtail..."
+        python3 ./tests/test_GUI_dogtail.py 2>&1 | tee dogtail.log
+        
+        # Cerrar Xvfb
+        kill $XVFB_PID 2>/dev/null || true
     
               
     - name: Test de Interacción GUI (bash)
