@@ -24,7 +24,8 @@ jobs:
           xvfb xdotool wmctrl dos2unix \
           imagemagick x11-apps \
           python3-cairo \
-          gnome-session gnome-settings-daemon dbus-x11  # ← Agregados para Dogtail
+          gnome-session gnome-settings-daemon dbus-x11  \
+          libatk-adaptor
         pip3 install pytest dogtail 
 
     - name: Limpiar Xvfb
@@ -89,24 +90,51 @@ jobs:
         Xvfb :99 -screen 0 1024x768x24 -ac -nolisten tcp &
         XVFB_PID=$!
         sleep 3
-
+        
+        # Habilitar accesibilidad (CRÍTICO para Dogtail)
+        export NO_AT_BRIDGE=1
+        export GNOME_ACCESSIBILITY=1
+        
+        # Forzar habilitación de accesibilidad en GTK
+        export GTK_MODULES="gail:atk-bridge"
+        export GTK_DEBUG="accessibility"
+        
+        # Configurar DBus para GNOME (necesario para algunas versiones)
         export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus"
-
-        timeout 10s dbus-launch --sh-syntax > /tmp/dbus-env
-        if [ -f /tmp/dbus-env ]; then
-          source /tmp/dbus-env
-          gsettings set org.gnome.desktop.interface toolkit-accessibility true 2>/dev/null || echo "gsettings no disponible, continuando..."
+        
+        # Verificar que Xvfb esté funcionando
+        echo "=== Verificando Xvfb ==="
+        xdpyinfo -display :99 > /dev/null 2>&1 && echo "✓ Xvfb funcionando" || echo "✗ Xvfb no responde"
+        
+        # Primero ejecutar la aplicación para que esté disponible
+        echo "=== Iniciando aplicación ==="
+        timeout 10s ./bin/calculo_punto_fijo &
+        APP_PID=$!
+        
+        # Esperar a que la aplicación se inicie completamente
+        sleep 3
+        
+        # Verificar que la aplicación esté corriendo
+        if ps -p $APP_PID > /dev/null; then
+          echo "✓ Aplicación ejecutándose (PID: $APP_PID)"
+        else
+          echo "✗ La aplicación no se está ejecutando"
         fi
         
-        export GNOME_ACCESSIBILITY=1
-        export NO_AT_BRIDGE=1  # ← IMPORTANTE: 1 en lugar de 0 para evitar el error
+        # Listar ventanas disponibles
+        echo "=== Ventanas en DISPLAY :99 ==="
+        xwininfo -root -display :99 -tree 2>&1 | head -20
+        
+        # Esperar un momento más para asegurar que AT-SPI esté listo
+        sleep 2
         
         # Ejecutar test Dogtail
-        echo "Ejecutando tests Dogtail..."
+        echo "=== Ejecutando tests Dogtail ==="
         python3 ./tests/test_GUI_dogtail.py 2>&1 | tee dogtail.log
-
+        
+        # Limpiar procesos
+        kill $APP_PID 2>/dev/null || true
         kill $XVFB_PID 2>/dev/null || true
-
     
     
     - name: Test de Interacción GUI (bash)
