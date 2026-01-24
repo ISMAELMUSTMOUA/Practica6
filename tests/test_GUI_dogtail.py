@@ -89,6 +89,7 @@ def test_moles_auto(iniciar_GUI):
     selector.childNamed('src').doubleClick()
     selector.childNamed('python').doubleClick()
     selector.childNamed('data').doubleClick()
+    selector.childNamed('testeo1.txt').click()
     selector.childNamed('Seleccionar').doubleClick()
     time.sleep(0.5)
 
@@ -129,6 +130,7 @@ def test_densidad_auto(iniciar_GUI):
     selector.childNamed('src').doubleClick()
     selector.childNamed('python').doubleClick()
     selector.childNamed('data').doubleClick()
+    selector.childNamed('testeo2.txt').click()
     selector.childNamed('Seleccionar').doubleClick()
     time.sleep(0.5)
 
@@ -167,6 +169,7 @@ def test_energia_auto(iniciar_GUI):
     selector.childNamed('src').doubleClick()
     selector.childNamed('python').doubleClick()
     selector.childNamed('data').doubleClick()
+    selector.childNamed('testeo3.txt').click()
     selector.childNamed('Seleccionar').doubleClick()
     time.sleep(0.5)
 

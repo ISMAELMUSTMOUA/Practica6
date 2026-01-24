@@ -106,6 +106,13 @@ La capa intermedia se verifica implícitamente a través de los tests de integra
 ### Tests de integración / GUI
 Como se ha comentado en la documentación proporcionada para la práctica, los tests de GUI resultan más complejos de implementar. Inicialmente se ha implementado un test básico pero posteriormente, ante la falta de un test para la capa intermedia, se ha decidido profundizar en la verificación de la interfaz.
 
+*Ejemplos de casos de test:*
+| Test | Entrada | Salida esperada | Tolerancia |
+|------|---------|-----------------|------------|
+| test_moles_esp | Vp=0.2, Vt=0.2 | Ejecución | PASS/NO PASS |
+| test_densidad_auto | testeo2.txt | Ejecución | PASS/NO PASS |
+| test_gen_energy | A=256, W=8500000 | GEneración fichero | PASS/NO PASS |
+
 *Descripción de los tests:*
 Se han desarrollado dos scripts complementarios para asegurar la robustez de la GUI:
 
@@ -118,10 +125,11 @@ Se han desarrollado dos scripts complementarios para asegurar la robustez de la 
     También se ha empleado la herramienta `Accerciser` para explorar los nodos de la interfaz y saber las características por las cuales los podía encontrar dogtail (nombre y descripción, principalmente) y las acciones que se podía realizar con ellos.
 
     Se han implementado tres tipos de test: 
-    - Verificación de las funciones de tests específicos, que toman como datos de entrada los generados para la capa 3 y los introduce en las entrys correspondientes un número determinado de veces.
+    - Verificación de las funciones de tests específicos, que toman como datos de entrada los generados para la capa 3 con `generacion.py` y los introduce en las entrys correspondientes un número determinado de veces.
     - Verificación de las funciones de test automáticos, que navegan automáticamente por el explorador de archivos y seleccionan los ficheros de ejemplo generados para la práctica 2.10.
     - Verificación de las funciones de generación de ficheros, que navegan dentro de la ventana emergente, introducen datos para generar el archivo, lo guardan y cierran. Finalmente se verifica que ha sido creado correctamente.
 
+NOTA: la librería de dogtail no puede ser empleada desde un environment de conda, por lo que se recomienda desactivarlo antes de la ejecución. Se requiere también de la instalación de distintas librerías para la ejecución de los tests. 
 ---
 
 ## c) Resultados de la verificación
@@ -152,17 +160,17 @@ Una vez termina este report se llama a pytest y se realiza la comprobación más
 
 Como se puede comprobar la mayoría de los casos pasan los test y pero hay casos que no, algunos debido a que son valores se encuentran fuera de los límites descritos, otros porque son casos especiales (que realmente no deben pasar los test) y otros que sí deberían pasarlos pero que no los pasan por imprecisiones en el desarrollo de `puntofijo.c` o de los rangos de las entradas de `moles, densidad y energía cinética`.
 
-
-**(Captura de pantalla de la ejecución: `./GUI_test_bash.sh`)**
-
-![Captura GUI Test](captura_gui.png)
+**Verificación de la capa 1**
 
 **(Captura de pantalla de la ejecución: `./test_GUI_basic.py`)**
 
 ![Captura GUI Test](captura_gui_py.png)
 
-Como se observa en las capturas, la verificación de la interfaz gráfica se ha realizado mediante una estrategia de *Caja Blanca*. Esta metodología permite comprobar de forma directa el funcionamiento interno de la aplicación, evaluando tanto la respuesta a las acciones del usuario (como clics y navegación) como el comportamiento general de la interfaz.
-El script `GUI_test_bash.sh` valida la interacción básica con los elementos gráficos, mientras que el archivo `test_GUI_basic.py` en Python se encarga de abrir la interfaz y detectar posibles errores o fallos durante su inicialización.
+El archivo `test_GUI_basic.py` se encarga de abrir la interfaz y detectar posibles errores o fallos durante su inicialización. Se podría considerar un test de caja negra, ya que no se interactúa con ningún elemento dentro de la interfaz y por tanto no es necesrario saber de su implementación.
+
+![Captura GUI Test](captura_gui_dogtail.png)
+
+El archivo `test_GUI_dogtail.py` se encarga de abrir la interfaz e interactuar con sus elementos. Para ello es necesario saber qué elementos exiten y cómo se llaman o qué descriptores tienen. También debe saberse qué pasa cuando se pulsan ciertos botones (se abre otra pestaña), por lo que se considera un test de caja blanca.
 
 ### Resumen de resultados
 
@@ -172,11 +180,13 @@ El script `GUI_test_bash.sh` valida la interacción básica con los elementos gr
 | Base (Moles) | 615 casos | 604 | 11 |
 | Base (Densidad)| 618 casos | 560 | 58 |
 | Base (Energía) | 618 casos | 603 | 15 |
-| GUI/Integración | 2 scripts (Py + Sh) | 2 | 0 |
+| GUI/Integración | 2 scripts (1 + 21 casos) | 22 | 0 |
 
 ### Análisis de errores (si los hay)
 
-Tal y como se puede apreciar aunque nuestra implementación es correcta para la mayoría de casos de test que se prueban, esta no se encuentra libre de fallos y principalmente en los cálculos de densidad presenta más errores que en el resto de casos. Algunos de los errores han sido introducidos a mano para probar casos los especiales y valores fuera de rango, pero otros no deberían darse pues son valores aleatorios que en principio deberían ser válidos (se encuentran dentro del rango). A la hora de crear los rangos de valores de las entradas hemos puesto los valores que hemos consultado en los datasheet pero los resultados nos hacen pensar que estos deben ser ajustados un poco. Por otro lado, también podríamos volver a revisar los rangos y los bits empleados en las operaciones realizadas en puntofijo.c y ver si se pueden mejorar los resultados.  
+Tal y como se puede apreciar aunque nuestra implementación es correcta para la mayoría de casos de test que se prueban, esta no se encuentra libre de fallos y principalmente en los cálculos de densidad presenta más errores que en el resto de casos. Algunos de los errores han sido introducidos a mano para probar casos los especiales y valores fuera de rango, pero otros no deberían darse pues son valores aleatorios que en principio deberían ser válidos (se encuentran dentro del rango). A la hora de crear los rangos de valores de las entradas hemos puesto los valores que hemos consultado en los datasheet pero los resultados nos hacen pensar que estos deben ser ajustados un poco. Por otro lado, también podríamos volver a revisar los rangos y los bits empleados en las operaciones realizadas en puntofijo.c y ver si se pueden mejorar los resultados.
+
+En cuanto a los tests de integración, no se han observado errores.
 
 ---
 
@@ -206,25 +216,37 @@ Finalmente, concluiremos este informe destacando los siguientes aspectos:
 
 ### Mejoras propuestas
 
-1.  Implementar **CI/CD con GitHub Actions**: Configurar un pipeline que ejecute estos tests automáticamente en cada `push` al repositorio.
-2.  Aumentar la granularidad de los tests unitarios para `gestion.c` separando la lógica de validación de la lógica de GTK para poder testearla sin levantar la interfaz gráfica.
+1.  Realizar una reestructuración de los callback de la interfaz, de forma que se pueda separar la lógica de control (funciones en C) de la lógica de GTK para poder validar las funciones en C de forma independiente.
+2.  Mejorar la implementación de puntofijo.c para corregir los errores detectados durante el testeo. 
+3.  Para la validación de la interfaz, verificar el contenido de los archivos generados, no solo su existencia. 
+4.  Añadir coverage report de la interfaz y sus callbacks.
 
 ---
 
 ## Referencias
 
 1. Apuntes de la asignatura: Tema 7 - Validación y Verificación.
-2. Documentación oficial de Pytest: https://docs.pytest.org/
-3. Preguntas varias: https://stackoverflow.com/questions
-4. Myers, G. J. (2012). The Art of Software Testing.
-5. Datasheet del MPX5700AP: https://www.nxp.com/docs/en/data-sheet/MPX5700.pdf
-6. Datasheet del LM35: https://www.ti.com/lit/ds/symlink/lm35.pdf?ts=1769101168972&ref_url=https%253A%252F%252Fwww.ti.com%252Fproduct%252FLM35
-7. Datasheet del BMP280: https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bmp280-ds001.pdf
-8. Datasheet del TMP36: https://www.analog.com/media/en/technical-documentation/data-sheets/tmp35_36_37.pdf
-9. Datasheet del ADXL345: https://www.analog.com/media/en/technical-documentation/data-sheets/adxl345.pdf
-10. Datasheet del HX711: https://cdn.sparkfun.com/datasheets/Sensors/ForceFlex/hx711_english.pdf
-
-11. Elección de pytest.mark.parametrizable sobre pytest.fixtures: https://stackoverflow.com/questions/60369047/pytest-using-parametized-fixture-vs-pytest-mark-parametrize
-
-
+2. Apuntes de la asignatura: Tema 4 - Python.
+3. Apuntes 'Programming Embedded Systems in C' - GITI (Organización de src y de proyecto)
+4. Documentación oficial de Pytest: https://docs.pytest.org/
+5. Documentación oficial de ctypes: https://docs.python.org/3/library/ctypes.html
+6. Documentación oficial de sys: https://docs.python.org/3/library/sys.html
+7. Preguntas varias: https://stackoverflow.com/questions 
+8. Git Manual de repo FRUPV
+9. Conventional commits: https://ec.europa.eu/component-library/v1.14.2/ec/docs/conventions/git/
+10. Datasheet del MPX5700AP: https://www.nxp.com/docs/en/data-sheet/MPX5700.pdf
+11. Datasheet del LM35: https://www.ti.com/lit/ds/symlink/lm35.pdf?ts=1769101168972&ref_url=https%253A%252F%252Fwww.ti.com%252Fproduct%252FLM35
+12. Datasheet del BMP280: https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bmp280-ds001.pdf
+13. Datasheet del TMP36: https://www.analog.com/media/en/technical-documentation/data-sheets/tmp35_36_37.pdf
+14. Datasheet del ADXL345: https://www.analog.com/media/en/technical-documentation/data-sheets/adxl345.pdf
+15. Datasheet del HX711: https://cdn.sparkfun.com/datasheets/Sensors/ForceFlex/hx711_english.pdf
+16. Elección de pytest.mark.parametrizable sobre pytest.fixtures: https://stackoverflow.com/questions/60369047/pytest-using-parametized-fixture-vs-pytest-mark-parametrize
+17. Elección de dogtail para la verificación: https://www.reddit.com/r/gnome/comments/kfm2ck/gtk_unit_testing_via_the_ui/
+18. Referencia de dogtail para comenzar: https://discourse.gnome.org/t/closing-gtk-window-in-dogtail-gui-test/15124
+19. Documentación oficial de dogtail: https://fedorapeople.org/~vhumpa/dogtail/epydoc/
+20. Overflow de C en Python: https://loicpefferkorn.net/2013/09/python-force-c-integer-overflow-behavior/
+21. Nan de C en Python: https://www.educative.io/answers/how-to-assign-nan-to-a-variable-in-python
+22. Infinito en Python: https://allwin-raju.medium.com/infinity-in-python-b1d8e03803aa
+23. Punteros de C en Python: https://www.geeksforgeeks.org/python/using-pointers-in-python-using-ctypes/
+24. Random en Python: https://www.w3schools.com/python/ref_random_uniform.asp
 ---
