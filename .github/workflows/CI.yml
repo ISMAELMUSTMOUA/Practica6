@@ -34,7 +34,7 @@ jobs:
         sudo pkill Xvfb || true
         sudo rm -f /tmp/.X99-lock /tmp/.X*-lock
 
-    - name: Preparar Archivos (Fix Line Endings)
+    - name: Preparar Archivos 
       run: |
         # Aseguramos que los scripts tengan formato Unix por si se editaron en Windows
         dos2unix makefile tests/*.py GUI_test_bash_git_verificacion.sh || true
@@ -64,7 +64,7 @@ jobs:
           python3 ./tests/test_GUI_basic.py
 
     # Test completo de interacción simulando usuario
-    - name: Test de Interacción GUI (Bash + Dogtail)
+    - name: Test de Interacción GUI (Bash)
       id: gui-test
       run: |
         # Ejecutamos el script dentro de un servidor gráfico virtual
